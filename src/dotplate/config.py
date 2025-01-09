@@ -1,9 +1,11 @@
 from __future__ import annotations
+from collections import defaultdict
 from pathlib import Path
 import sys
-from typing import Annotated
-from pydantic import BaseModel
+from typing import Annotated, Any
+from pydantic import BaseModel, Field
 from pydantic.functional_validators import AfterValidator
+from .util import SuiteSet
 
 if sys.version_info[:2] >= (3, 11):
     from tomllib import load as toml_load
@@ -42,10 +44,15 @@ class PathConfig(BaseConfig):
             self.local_config = p / self.local_config
 
 
+class SuiteConfig(BaseConfig):
+    files: list[str]
+    enabled: bool = False
+
+
 class Config(BaseConfig):
     paths: PathConfig
     # TODO: jinja
-    # TODO: suites
+    suites: dict[str, SuiteConfig] = Field(default_factory=dict)
     # TODO: vars
 
     @classmethod
@@ -58,6 +65,19 @@ class Config(BaseConfig):
 
     def resolve_paths_relative_to(self, p: Path) -> None:
         self.paths.resolve_paths_relative_to(p)
+
+    def default_suites(self) -> set[str]:
+        return {name for name, suicfg in self.suites.items() if suicfg.enabled}
+
+    def context(self) -> dict[str, Any]:
+        raise NotImplementedError
+
+    def paths2suites(self) -> defaultdict[str, SuiteSet]:
+        mapping: defaultdict[str, SuiteSet] = defaultdict(SuiteSet)
+        for name, suicfg in self.suites.items():
+            for file in suicfg.files:
+                mapping[file].suites.add(name)
+        return mapping
 
 
 # TODO: Local config

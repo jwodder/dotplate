@@ -5,7 +5,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 from .config import Config
-from .util import is_executable, listdir, set_executable, unset_executable
+from .util import (
+    SuiteSet,
+    is_executable,
+    listdir,
+    set_executable_bit,
+    unset_executable_bit,
+)
 
 
 @dataclass
@@ -14,17 +20,31 @@ class Dotplate:
     context: dict[str, Any]
     suites: set[str]
     # Src paths are in sorted order:
-    _src_paths: list[str] | None = None
+    _src_paths: list[tuple[str, SuiteSet]] | None = None
+
+    @classmethod
+    def from_config_file(cls, cfgfile: str | Path) -> Dotplate:
+        return cls.from_config(Config.from_file(cfgfile))
 
     @classmethod
     def from_config(cls, cfg: Config) -> Dotplate:
-        raise NotImplementedError
+        context = cfg.context()
+        suites = cfg.default_suites()
+        return cls(cfg=cfg, context=context, suites=suites)
 
     def src_paths(self) -> list[str]:
         if self._src_paths is None:
-            ### TODO: Filter based on enabled suites:
-            self._src_paths = listdir(self.cfg.paths.dest)
-        return list(self._src_paths)
+            suitemap = self.cfg.paths2suites()
+            src_paths = listdir(self.cfg.paths.dest)
+            # listdir() should return the paths in sorted order, but just to be
+            # sure…
+            src_paths.sort()
+            self._src_paths = [(path, suitemap[path]) for path in src_paths]
+        return [
+            path
+            for (path, suiteset) in self._src_paths
+            if suiteset.is_file_active(self.suites)
+        ]
 
     def render(self, src_path: str) -> RenderedFile:
         raise NotImplementedError
@@ -85,9 +105,9 @@ class RenderedFile:
                     fp.write(self.content)
             if diff.xbit_diff:
                 if self.executable:
-                    set_executable(dest_path)
+                    set_executable_bit(dest_path)
                 else:
-                    unset_executable(dest_path)
+                    unset_executable_bit(dest_path)
 
     def install_in_dir(self, dirpath: Path) -> None:
         self.install(dirpath / self.src_path)

@@ -1,9 +1,18 @@
 from __future__ import annotations
+from dataclasses import dataclass, field
 from pathlib import Path
 import stat
 import subprocess
 from iterpath import iterpath
 from linesep import split_terminated
+
+
+@dataclass
+class SuiteSet:
+    suites: set[str] = field(default_factory=set)
+
+    def is_file_active(self, enabled_suites: set[str]) -> bool:
+        return not self.suites or bool(self.suites & enabled_suites)
 
 
 def listdir(dirpath: Path) -> list[str]:
@@ -65,13 +74,13 @@ def is_executable(p: Path) -> bool:
     return p.stat().st_mode & stat.S_IXUSR != 0
 
 
-def set_executable(p: Path) -> None:
+def set_executable_bit(p: Path) -> None:
     mode = p.stat().st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     p.chmod(mode)
 
 
-def unset_executable(p: Path) -> None:
+def unset_executable_bit(p: Path) -> None:
     mode = p.stat().st_mode
     mode &= ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     p.chmod(mode)
