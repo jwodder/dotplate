@@ -11,7 +11,7 @@ else:
     from tomli import load as toml_load
 
 
-def path_resolve(p: Path) -> Path:
+def expandpath(p: Path) -> Path:
     return p.expanduser()
 
 
