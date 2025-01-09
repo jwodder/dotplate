@@ -77,7 +77,9 @@ class JinjaConfig(BaseConfig):
     extensions: list[str] = Field(default_factory=list)
     optimized: bool = True
     autoescape: bool | None = None
-    select_autoescape: SelectAutoescapeConfig
+    select_autoescape: SelectAutoescapeConfig = Field(
+        default_factory=SelectAutoescapeConfig
+    )
     cache_size: int = 400
     auto_reload: bool = True
 
@@ -95,9 +97,9 @@ class SuiteConfig(BaseConfig):
 
 class Config(BaseConfig):
     core: CoreConfig
-    jinja: JinjaConfig
+    jinja: JinjaConfig = Field(default_factory=JinjaConfig)
     suites: dict[str, SuiteConfig] = Field(default_factory=dict)
-    vars: dict[str, Any]
+    vars: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
     def from_file(cls, filepath: str | Path) -> Config:
@@ -106,6 +108,30 @@ class Config(BaseConfig):
         cfg = cls.model_validate(data)
         cfg.resolve_paths_relative_to(Path(filepath).parent)
         return cfg
+
+    def merge_local_config(self, cfg: LocalConfig) -> None:
+        if cfg.local.dest is not None:
+            self.core.dest = cfg.local.dest
+        if isinstance(cfg.local.enabled_suites, list):
+            enabled = set(cfg.local.enabled_suites)
+            for name, suicfg in self.suites.items():
+                suicfg.enabled = name in enabled
+        elif isinstance(cfg.local.enabled_suites, dict):
+            for name, enable in cfg.local.enabled_suites.items():
+                try:
+                    self.suites[name].enabled = enable
+                except KeyError:
+                    pass
+        if cfg.vars is not None:
+            self.vars.update(cfg.vars)
+
+    def load_local_config(self) -> None:
+        if self.core.local_config is not None:
+            try:
+                cfg = LocalConfig.from_file(self.core.local_config)
+            except FileNotFoundError:
+                return
+            self.merge_local_config(cfg)
 
     def resolve_paths_relative_to(self, p: Path) -> None:
         self.core.resolve_paths_relative_to(p)
@@ -143,4 +169,18 @@ class Config(BaseConfig):
         )
 
 
-# TODO: Local config
+class LocalTblConfig(BaseConfig):
+    dest: ExpandedPath | None = None
+    enabled_suites: list[str] | dict[str, bool] | None = None
+
+
+class LocalConfig(BaseConfig):
+    local: LocalTblConfig
+    vars: dict[str, Any] = Field(default_factory=dict)
+
+    @classmethod
+    def from_file(cls, filepath: str | Path) -> LocalConfig:
+        with open(filepath, "rb") as fp:
+            data = toml_load(fp)
+        cfg = cls.model_validate(data)
+        return cfg

@@ -77,10 +77,12 @@ want
 
 - Local config file (TOML):
     - `[local]`
-        - `enabled-suites` — list of suite names
-        - TODO: Support enabling & disabling individual suites without having
-          to list everything you want enabled
+        - `enabled-suites` — Either a list of suite names (to enable exactly
+          those suites) or a table of suite names to booleans to set the
+          "enabled" values of just those suites
         - `dest`
+            - Unlike in the global config, relative paths are not resolved (but
+              tildes are still expanded)
     - `[vars]` — overwrites corresponding keys in `[vars]` in main config file
 
 - CLI options:

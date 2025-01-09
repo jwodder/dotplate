@@ -30,7 +30,9 @@ class Dotplate:
 
     @classmethod
     def from_config_file(cls, cfgfile: str | Path) -> Dotplate:
-        return cls.from_config(Config.from_file(cfgfile))
+        cfg = Config.from_file(cfgfile)
+        cfg.load_local_config()
+        return cls.from_config(cfg)
 
     @classmethod
     def from_config(cls, cfg: Config) -> Dotplate:
