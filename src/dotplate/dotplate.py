@@ -24,6 +24,7 @@ class Dotplate:
     vars: dict[str, Any]
     suites: set[str]
     jinja_env: Environment
+    dest: Path
     # Src paths are in sorted order:
     _src_paths: list[tuple[str, SuiteSet]] | None = field(init=False, default=None)
 
@@ -36,12 +37,22 @@ class Dotplate:
         uservars = cfg.vars.copy()
         suites = cfg.default_suites()
         jinja_env = cfg.make_jinja_env()
-        return cls(cfg=cfg, vars=uservars, suites=suites, jinja_env=jinja_env)
+        return cls(
+            cfg=cfg,
+            vars=uservars,
+            suites=suites,
+            jinja_env=jinja_env,
+            dest=cfg.core.dest,
+        )
+
+    @property
+    def src(self) -> Path:
+        return self.cfg.core.src
 
     def _ensure_src_paths(self) -> list[tuple[str, SuiteSet]]:
         if self._src_paths is None:
             suitemap = self.cfg.paths2suites()
-            src_paths = listdir(self.cfg.paths.dest)
+            src_paths = listdir(self.dest)
             # listdir() should return the paths in sorted order, but just to be
             # sure…
             src_paths.sort()
@@ -73,8 +84,8 @@ class Dotplate:
         return RenderedFile(
             content=template.render(self.get_context()),
             src_path=src_path,
-            executable=is_executable(self.cfg.paths.src / src_path),
-            dest_path=self.cfg.paths.dest / src_path,
+            executable=is_executable(self.src / src_path),
+            dest_path=self.dest / src_path,
         )
 
     def install(self, src_paths: list[str] | None = None) -> None:

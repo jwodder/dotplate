@@ -34,7 +34,7 @@ class BaseConfig(BaseModel):
     }
 
 
-class PathConfig(BaseConfig):
+class CoreConfig(BaseConfig):
     src: ExpandedPath
     dest: ExpandedPath
     local_config: ExpandedPath | None = None
@@ -94,7 +94,7 @@ class SuiteConfig(BaseConfig):
 
 
 class Config(BaseConfig):
-    paths: PathConfig
+    core: CoreConfig
     jinja: JinjaConfig
     suites: dict[str, SuiteConfig] = Field(default_factory=dict)
     vars: dict[str, Any]
@@ -108,7 +108,7 @@ class Config(BaseConfig):
         return cfg
 
     def resolve_paths_relative_to(self, p: Path) -> None:
-        self.paths.resolve_paths_relative_to(p)
+        self.core.resolve_paths_relative_to(p)
 
     def default_suites(self) -> set[str]:
         return {name for name, suicfg in self.suites.items() if suicfg.enabled}

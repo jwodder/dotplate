@@ -53,7 +53,7 @@ want
     - location specified on command line, defaulting to `dotplate.toml` in
       current directory
     - Contents:
-        - `[paths]`
+        - `[core]`
             - `src` — path to directory containing source files/templates to
               install
                 - relative to directory containing config file
