@@ -37,6 +37,7 @@ want
       "other" mode bits)
     - configurable backup extension?
     - Reporting files that exist in dest directories but not in src?
+    - options for handling symlinks
 
 - Possible names:
     - `dotplate`

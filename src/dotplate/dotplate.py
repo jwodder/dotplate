@@ -1,10 +1,14 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from bisect import bisect_left
+from dataclasses import dataclass, field
 from difflib import unified_diff
 from enum import Enum
+from operator import itemgetter
 from pathlib import Path
 from typing import Any
+from jinja2 import Environment
 from .config import Config
+from .errors import InactiveSrcPath, SrcPathNotFound
 from .util import (
     SuiteSet,
     is_executable,
@@ -17,10 +21,11 @@ from .util import (
 @dataclass
 class Dotplate:
     cfg: Config
-    context: dict[str, Any]
+    vars: dict[str, Any]
     suites: set[str]
+    jinja_env: Environment
     # Src paths are in sorted order:
-    _src_paths: list[tuple[str, SuiteSet]] | None = None
+    _src_paths: list[tuple[str, SuiteSet]] | None = field(init=False, default=None)
 
     @classmethod
     def from_config_file(cls, cfgfile: str | Path) -> Dotplate:
@@ -28,11 +33,12 @@ class Dotplate:
 
     @classmethod
     def from_config(cls, cfg: Config) -> Dotplate:
-        context = cfg.context()
+        uservars = cfg.vars.copy()
         suites = cfg.default_suites()
-        return cls(cfg=cfg, context=context, suites=suites)
+        jinja_env = cfg.make_jinja_env()
+        return cls(cfg=cfg, vars=uservars, suites=suites, jinja_env=jinja_env)
 
-    def src_paths(self) -> list[str]:
+    def _ensure_src_paths(self) -> list[tuple[str, SuiteSet]]:
         if self._src_paths is None:
             suitemap = self.cfg.paths2suites()
             src_paths = listdir(self.cfg.paths.dest)
@@ -40,14 +46,36 @@ class Dotplate:
             # sure…
             src_paths.sort()
             self._src_paths = [(path, suitemap[path]) for path in src_paths]
+        return self._src_paths
+
+    def src_paths(self) -> list[str]:
+        src_paths = self._ensure_src_paths()
         return [
             path
-            for (path, suiteset) in self._src_paths
+            for (path, suiteset) in src_paths
             if suiteset.is_file_active(self.suites)
         ]
 
+    def is_active(self, src_path: str) -> bool:
+        src_paths = self._ensure_src_paths()
+        if not src_paths:
+            raise SrcPathNotFound(src_path)
+        i = bisect_left(src_paths, src_path, key=itemgetter(0))
+        (sp, suiteset) = src_paths[i]
+        if sp != src_path:
+            raise SrcPathNotFound(src_path)
+        return suiteset.is_file_active(self.suites)
+
     def render(self, src_path: str) -> RenderedFile:
-        raise NotImplementedError
+        if not self.is_active(src_path):
+            raise InactiveSrcPath(src_path)
+        template = self.jinja_env.get_template(src_path)
+        return RenderedFile(
+            content=template.render(self.get_context()),
+            src_path=src_path,
+            executable=is_executable(self.cfg.paths.src / src_path),
+            dest_path=self.cfg.paths.dest / src_path,
+        )
 
     def install(self, src_paths: list[str] | None = None) -> None:
         if src_paths is None:
@@ -55,6 +83,10 @@ class Dotplate:
         files = [self.render(p) for p in src_paths]
         for f in files:
             f.install()
+
+    def get_context(self) -> dict[str, Any]:
+        # Returs a fresh dict on each invocation
+        raise NotImplementedError
 
 
 @dataclass
