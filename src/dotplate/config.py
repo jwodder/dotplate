@@ -113,9 +113,6 @@ class Config(BaseConfig):
     def default_suites(self) -> set[str]:
         return {name for name, suicfg in self.suites.items() if suicfg.enabled}
 
-    def context(self) -> dict[str, Any]:
-        raise NotImplementedError
-
     def paths2suites(self) -> defaultdict[str, SuiteSet]:
         mapping: defaultdict[str, SuiteSet] = defaultdict(SuiteSet)
         for name, suicfg in self.suites.items():
@@ -125,7 +122,7 @@ class Config(BaseConfig):
 
     def make_jinja_env(self) -> Environment:
         return Environment(
-            loader=FileSystemLoader(self.paths.src, followlinks=True),
+            loader=FileSystemLoader(self.core.src, followlinks=True),
             block_start_string=self.jinja.block_start_string,
             block_end_string=self.jinja.block_end_string,
             variable_start_string=self.jinja.variable_start_string,

@@ -38,6 +38,7 @@ want
     - configurable backup extension?
     - Reporting files that exist in dest directories but not in src?
     - options for handling symlinks
+    - Disallow suite names that don't correspond to a suite in the config file
 
 - Possible names:
     - `dotplate`

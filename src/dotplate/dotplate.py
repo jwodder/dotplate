@@ -77,16 +77,21 @@ class Dotplate:
             raise SrcPathNotFound(src_path)
         return suiteset.is_file_active(self.suites)
 
-    def render(self, src_path: str) -> RenderedFile:
+    def render(self, src_path: str, dest_path: Path | None = None) -> RenderedFile:
         if not self.is_active(src_path):
             raise InactiveSrcPath(src_path)
         template = self.jinja_env.get_template(src_path)
+        if dest_path is None:
+            dest_path = self.dest / src_path
         return RenderedFile(
-            content=template.render(self.get_context()),
+            content=template.render(self.get_context(dest_path)),
             src_path=src_path,
             executable=is_executable(self.src / src_path),
-            dest_path=self.dest / src_path,
+            dest_path=dest_path,
         )
+
+    def install_path(self, src_path: str, dest_path: Path | None = None) -> None:
+        self.render(src_path, dest_path).install()
 
     def install(self, src_paths: list[str] | None = None) -> None:
         if src_paths is None:
@@ -95,9 +100,21 @@ class Dotplate:
         for f in files:
             f.install()
 
-    def get_context(self) -> dict[str, Any]:
+    def get_context(self, dest_path: Path) -> dict[str, Any]:
         # Returs a fresh dict on each invocation
-        raise NotImplementedError
+        return {
+            "dotplate": {
+                "suites": {
+                    "enabled": sorted(self.suites),
+                    "files": {
+                        name: list(suicfg.files)
+                        for name, suicfg in self.cfg.suites.items()
+                    },
+                },
+                "dest_path": str(dest_path),
+                "vars": self.vars.copy(),
+            }
+        }
 
 
 @dataclass
