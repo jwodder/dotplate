@@ -35,7 +35,7 @@ class BaseConfig(BaseModel):
 
 
 class CoreConfig(BaseConfig):
-    src: ExpandedPath
+    src: ExpandedPath = Field(default_factory=Path)
     dest: ExpandedPath
     local_config: ExpandedPath | None = None
 

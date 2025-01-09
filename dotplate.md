@@ -39,6 +39,7 @@ want
     - Reporting files that exist in dest directories but not in src?
     - options for handling symlinks
     - Disallow suite names that don't correspond to a suite in the config file
+    - Add an option for merging global & local vars via recursive dict merging?
 
 - Possible names:
     - `dotplate`
@@ -63,7 +64,6 @@ want
             - `dest` — path where managed files are installed
                 - can be set on command line
                 - can be set in local config file
-                - default to `$HOME`?
             - `local-config` — path to config file for local machine
                 - can be set on command line
                 - If not set, not used
@@ -76,14 +76,16 @@ want
             - support extension via command line?
 
 - Local config file (TOML):
-    - `enabled-suites` — list of suite names
-    - `dest`
+    - `[local]`
+        - `enabled-suites` — list of suite names
+        - TODO: Support enabling & disabling individual suites without having
+          to list everything you want enabled
+        - `dest`
     - `[vars]` — overwrites corresponding keys in `[vars]` in main config file
 
 - CLI options:
     - `-s`/`--enable-suite <name>` (multiple-use)
     - `-S`/`--disable-suite <name>` (multiple-use)
-    - `--no-default-suites`?
     - config file location
     - local config file location
     - `dest` path
