@@ -1,5 +1,4 @@
 from __future__ import annotations
-import os
 from pathlib import Path
 import stat
 import subprocess
@@ -63,7 +62,16 @@ def in_git(dirpath: Path) -> bool:
 
 
 def is_executable(p: Path) -> bool:
-    if os.name == "posix":
-        return p.stat().st_mode & stat.S_IXUSR != 0
-    else:
-        return False
+    return p.stat().st_mode & stat.S_IXUSR != 0
+
+
+def set_executable(p: Path) -> None:
+    mode = p.stat().st_mode
+    mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    p.chmod(mode)
+
+
+def unset_executable(p: Path) -> None:
+    mode = p.stat().st_mode
+    mode &= ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    p.chmod(mode)

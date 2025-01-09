@@ -5,7 +5,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 from .config import Config
-from .util import is_executable, listdir
+from .util import is_executable, listdir, set_executable, unset_executable
 
 
 @dataclass
@@ -13,13 +13,18 @@ class Dotplate:
     cfg: Config
     context: dict[str, Any]
     suites: set[str]
+    # Src paths are in sorted order:
+    _src_paths: list[str] | None = None
 
     @classmethod
     def from_config(cls, cfg: Config) -> Dotplate:
         raise NotImplementedError
 
     def src_paths(self) -> list[str]:
-        return listdir(self.cfg.dest)
+        if self._src_paths is None:
+            ### TODO: Filter based on enabled suites:
+            self._src_paths = listdir(self.cfg.paths.dest)
+        return list(self._src_paths)
 
     def render(self, src_path: str) -> RenderedFile:
         raise NotImplementedError
@@ -71,10 +76,21 @@ class RenderedFile:
         return Diff(delta=delta, state=state, xbit_diff=xbit_diff)
 
     def install(self, dest_path: Path | None = None) -> None:
-        raise NotImplementedError
+        if dest_path is None:
+            dest_path = self.dest_path
+        if diff := self.diff(dest_path):
+            if diff.state:
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
+                with dest_path.open("w", encoding="utf-8") as fp:
+                    fp.write(self.content)
+            if diff.xbit_diff:
+                if self.executable:
+                    set_executable(dest_path)
+                else:
+                    unset_executable(dest_path)
 
     def install_in_dir(self, dirpath: Path) -> None:
-        raise NotImplementedError
+        self.install(dirpath / self.src_path)
 
 
 @dataclass
