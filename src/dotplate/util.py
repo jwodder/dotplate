@@ -35,7 +35,7 @@ def listdir(dirpath: Path) -> list[str]:
         return split_terminated(r.stdout, "\0")
     else:
         with iterpath(dirpath, dirs=False, return_relative=True, sort=True) as ip:
-            return [str(p) for p in ip]
+            return [p.as_posix() for p in ip]
 
 
 def in_git(dirpath: Path) -> bool:
