@@ -19,8 +19,6 @@ want
       ignored
     - usable as a Python library
 
-- s/suite/feature/?
-
 - Come up with a better name for "src paths"
 
 - Other possible features:
@@ -40,6 +38,7 @@ want
     - options for handling symlinks (in both src and dest)
     - Disallow suite names that don't correspond to a suite in the config file
     - Add an option for merging global & local vars via recursive dict merging?
+    - Support setting a custom external command for diffing with
 
 - Config file:
     - TOML

@@ -101,6 +101,7 @@ class Config(BaseConfig):
     jinja: JinjaConfig = Field(default_factory=JinjaConfig)
     suites: dict[str, SuiteConfig] = Field(default_factory=dict)
     vars: dict[str, Any] = Field(default_factory=dict)
+    _exclude_config_path: str | None = None
 
     @classmethod
     def from_file(cls, filepath: str | Path) -> Config:
@@ -108,6 +109,12 @@ class Config(BaseConfig):
             data = toml_load(fp)
         cfg = cls.model_validate(data)
         cfg.resolve_paths_relative_to(Path(filepath).parent)
+        src = cfg.core.src.resolve()
+        cfgpath = Path(filepath).resolve()
+        try:
+            cfg._exclude_config_path = cfgpath.relative_to(src).as_posix()
+        except ValueError:
+            pass
         return cfg
 
     def merge_local_config(self, cfg: LocalConfig) -> None:

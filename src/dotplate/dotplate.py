@@ -59,6 +59,11 @@ class Dotplate:
             # listdir() should return the paths in sorted order, but just to be
             # sure…
             src_paths.sort()
+            if self.cfg._exclude_config_path is not None:
+                try:
+                    src_paths.remove(self.cfg._exclude_config_path)
+                except ValueError:
+                    pass
             self._src_paths = [(path, suitemap[path]) for path in src_paths]
         return self._src_paths
 
