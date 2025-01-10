@@ -38,6 +38,7 @@ class CoreConfig(BaseConfig):
     src: ExpandedPath = Field(default_factory=Path)
     dest: ExpandedPath
     local_config: ExpandedPath | None = None
+    backup_ext: str = Field(default=".dotplate.bak", min_length=1)
 
     def resolve_paths_relative_to(self, p: Path) -> None:
         self.src = p / self.src

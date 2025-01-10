@@ -37,7 +37,7 @@ want
       "other" mode bits)
     - configurable backup extension?
     - Reporting files that exist in dest directories but not in src?
-    - options for handling symlinks
+    - options for handling symlinks (in both src and dest)
     - Disallow suite names that don't correspond to a suite in the config file
     - Add an option for merging global & local vars via recursive dict merging?
 

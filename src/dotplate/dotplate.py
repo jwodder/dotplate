@@ -11,6 +11,7 @@ from .config import Config
 from .errors import InactiveSrcPath, SrcPathNotFound
 from .util import (
     SuiteSet,
+    backup,
     is_executable,
     listdir,
     set_executable_bit,
@@ -90,6 +91,7 @@ class Dotplate:
             src_path=src_path,
             executable=is_executable(self.src / src_path),
             dest_path=dest_path,
+            backup_ext=self.cfg.core.backup_ext,
         )
 
     def install_path(self, src_path: str, dest_path: Path | None = None) -> None:
@@ -103,7 +105,7 @@ class Dotplate:
             f.install()
 
     def get_context(self, dest_path: Path) -> dict[str, Any]:
-        # Returs a fresh dict on each invocation
+        # Returns a fresh dict on each invocation
         return {
             "dotplate": {
                 "suites": {
@@ -124,6 +126,7 @@ class RenderedFile:
     content: str
     src_path: str
     dest_path: Path
+    backup_ext: str
     executable: bool = False
 
     def diff(self, dest_path: Path | None = None) -> Diff:
@@ -162,6 +165,7 @@ class RenderedFile:
             dest_path = self.dest_path
         if diff := self.diff(dest_path):
             if diff.state:
+                backup(dest_path, self.backup_ext)
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 with dest_path.open("w", encoding="utf-8") as fp:
                     fp.write(self.content)

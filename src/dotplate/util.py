@@ -84,3 +84,9 @@ def unset_executable_bit(p: Path) -> None:
     mode = p.stat().st_mode
     mode &= ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     p.chmod(mode)
+
+
+def backup(p: Path, ext: str) -> None:
+    if p.exists():
+        target = p.with_name(p.name + ext)
+        p.replace(target)
