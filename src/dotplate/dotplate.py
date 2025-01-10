@@ -92,7 +92,9 @@ class Dotplate:
         if dest_path is None:
             dest_path = self.dest / src_path
         return RenderedFile(
-            content=template.render(self.get_context(dest_path)),
+            content=template.render(
+                self.get_context(src_path=src_path, dest_path=dest_path)
+            ),
             src_path=src_path,
             executable=is_executable(self.src / src_path),
             dest_path=dest_path,
@@ -109,7 +111,7 @@ class Dotplate:
         for f in files:
             f.install()
 
-    def get_context(self, dest_path: Path) -> dict[str, Any]:
+    def get_context(self, src_path: str, dest_path: Path) -> dict[str, Any]:
         # Returns a fresh dict on each invocation
         return {
             "dotplate": {
@@ -120,6 +122,7 @@ class Dotplate:
                         for name, suicfg in self.cfg.suites.items()
                     },
                 },
+                "src_path": src_path,
                 "dest_path": str(dest_path),
                 "vars": self.vars.copy(),
             }
