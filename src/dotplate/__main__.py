@@ -97,5 +97,12 @@ def install(dotplate: Dotplate, src_paths: tuple[str, ...]) -> None:
     dotplate.install(list(src_paths) or None)
 
 
+@main.command("list")
+@click.pass_obj
+def list_cmd(dotplate: Dotplate) -> None:
+    for sp in dotplate.src_paths():
+        print(sp)
+
+
 if __name__ == "__main__":
     main()  # pragma: no cover

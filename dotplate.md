@@ -92,7 +92,8 @@ want
         - Unless a `--yes` option is given, for each file that would be
           installed, you are asked whether you want to install it, and you have
           the option to view a diff at this time
-    - `list` — list all paths that would be installed
+    - `list` — list all paths that would be installed (whether they differ or
+      not)
     - `render <src-path>` — print templated content of file
     - `diff [src-path ...]`
         - Diffs everything if no `src-path` given
