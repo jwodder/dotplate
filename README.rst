@@ -73,11 +73,11 @@ Installation
     python3 -m pip install dotplate
 
 
-Getting Started
-===============
+Example
+=======
 
-To get started using ``dotplate``, create a `TOML <https://toml.io>`_
-configuration file named ``dotplate.toml`` following this example:
+Setting up ``dotplate`` begins with creating a `TOML <https://toml.io>`_
+configuration file named ``dotplate.toml``.  Here's an example:
 
 .. code:: toml
 
@@ -153,27 +153,27 @@ configuration file named ``dotplate.toml`` following this example:
         "$HOME/.cargo/bin",
     ]
 
-Now you're ready to begin writing templates.  Let's create a template for a
-simple ``~/.profile`` file: Create a file also named ``.profile``, and put it
-in the directory indicated by the value you used for ``core.src`` in
-``dotplate.toml``.  The following contents for the file make use of the
-``vars.editor`` and ``vars.additional_paths`` fields defined in the
-configuration file shown above.
+Here's an accompanying template for a simple ``~/.profile`` file, named (oddly
+enough) ``.profile``.  The template is located in the directory specified by
+the ``core.src`` field in the configuration file.
 
 .. code:: bash
 
     export PATH="$PATH:{{ dotplate.vars.additional_paths|join(":") }}"
     export EDITOR={{ dotplate.vars.editor }}
 
-Now, if you run ``dotplate install`` in the directory where the
-``dotplate.toml`` file is located, the ``.profile`` file in your home directory
-will be replaced by the rendered contents of the template (Don't worry, the
-original is backed up at ``~/.profile.dotplate.bak``).  With the `[vars]` table
-from the configuration file above, your ``~/.profile`` will now contain:
+With these files, running ``dotplate install`` in the directory where the
+``dotplate.toml`` file is located will replace the contents of your
+``~/.profile`` file with:
 
 .. code:: bash
 
     export PATH="$PATH:$HOME/local/bin:$HOME/.cargo/bin"
     export EDITOR=vim
+
+Don't worry, the original ``~/.profile`` is backed up at
+``~/.profile.dotplate.bak``.  If you just want to test out the template by
+installing to a temporary directory instead, run ``dotplate --dest
+path/to/temp/dir install``.
 
 See `the dotplate documentation <Documentation_>`_ for more information.
