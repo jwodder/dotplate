@@ -85,7 +85,7 @@ def diff(dotplate: Dotplate, src_paths: tuple[str, ...]) -> None:
         d = file.diff()
         ### TODO: Report differences in executable bit
         if d.state:
-            print(d.delta)
+            print(d.delta, end="")
 
 
 @main.command()
@@ -102,6 +102,14 @@ def install(dotplate: Dotplate, src_paths: tuple[str, ...]) -> None:
 def list_cmd(dotplate: Dotplate) -> None:
     for sp in dotplate.src_paths():
         print(sp)
+
+
+@main.command()
+@click.pass_obj
+@click.argument("src_path")
+def render(dotplate: Dotplate, src_path: str) -> None:
+    f = dotplate.render(src_path)
+    print(f.content, end="")
 
 
 if __name__ == "__main__":
