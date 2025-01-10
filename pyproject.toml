@@ -33,6 +33,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "click >= 8.0",
     "iterpath ~= 0.4.1",
     "jinja2 ~= 3.1",
     "linesep ~= 0.5",

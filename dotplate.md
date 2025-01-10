@@ -41,15 +41,6 @@ want
     - Disallow suite names that don't correspond to a suite in the config file
     - Add an option for merging global & local vars via recursive dict merging?
 
-- Possible names:
-    - `dotplate`
-    - `dtf`
-    - `dotdotdot` (taken)
-    - `ddd` (taken)
-    - `speck` (taken)
-    - `filespeck`
-    - `dotspeck`
-
 - Config file:
     - TOML
     - location specified on command line, defaulting to `dotplate.toml` in

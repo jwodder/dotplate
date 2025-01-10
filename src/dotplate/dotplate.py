@@ -126,7 +126,7 @@ class RenderedFile:
     dest_path: Path
     executable: bool = False
 
-    def diff(self, dest_path: Path | None) -> Diff:
+    def diff(self, dest_path: Path | None = None) -> Diff:
         if dest_path is None:
             dest_path = self.dest_path
         try:
