@@ -134,11 +134,9 @@ class RenderedFile:
     backup_ext: str
     executable: bool = False
 
-    def diff(self, dest_path: Path | None = None) -> Diff:
-        if dest_path is None:
-            dest_path = self.dest_path
+    def diff(self) -> Diff:
         try:
-            with dest_path.open("r", encoding="utf-8") as fp:
+            with self.dest_path.open("r", encoding="utf-8") as fp:
                 dest_content = fp.read()
         except FileNotFoundError:
             dest_content = ""
@@ -148,7 +146,7 @@ class RenderedFile:
             state = (
                 DiffState.NODIFF if dest_content == self.content else DiffState.CHANGED
             )
-            match (self.executable, is_executable(dest_path)):
+            match (self.executable, is_executable(self.dest_path)):
                 case (True, False):
                     xbit_diff = XBitDiff.REMOVED
                 case (False, True):
@@ -160,28 +158,23 @@ class RenderedFile:
                 dest_content.splitlines(True),
                 self.content.splitlines(True),
                 fromfile=self.src_path,
-                tofile=str(dest_path),
+                tofile=str(self.dest_path),
             )
         )
         return Diff(delta=delta, state=state, xbit_diff=xbit_diff)
 
-    def install(self, dest_path: Path | None = None) -> None:
-        if dest_path is None:
-            dest_path = self.dest_path
-        if diff := self.diff(dest_path):
+    def install(self) -> None:
+        if diff := self.diff():
             if diff.state:
-                backup(dest_path, self.backup_ext)
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
-                with dest_path.open("w", encoding="utf-8") as fp:
+                backup(self.dest_path, self.backup_ext)
+                self.dest_path.parent.mkdir(parents=True, exist_ok=True)
+                with self.dest_path.open("w", encoding="utf-8") as fp:
                     fp.write(self.content)
             if diff.xbit_diff:
                 if self.executable:
-                    set_executable_bit(dest_path)
+                    set_executable_bit(self.dest_path)
                 else:
-                    unset_executable_bit(dest_path)
-
-    def install_in_dir(self, dirpath: Path) -> None:
-        self.install(dirpath / self.src_path)
+                    unset_executable_bit(self.dest_path)
 
 
 @dataclass
