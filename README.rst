@@ -16,9 +16,10 @@
     :target: https://opensource.org/licenses/MIT
     :alt: MIT License
 
-`GitHub <https://github.com/jwodder/dotplate>`_
-| `Documentation <https://dotplate.readthedocs.io>`_
-| `Issues <https://github.com/jwodder/dotplate/issues>`_
+..
+    `GitHub <https://github.com/jwodder/dotplate>`_
+    | `Documentation <https://dotplate.readthedocs.io>`_
+    | `Issues <https://github.com/jwodder/dotplate/issues>`_
 
 ``dotplate`` is yet another dotfile manager/templater program and Python
 library, written because I couldn't find one that already had the exact
@@ -176,4 +177,5 @@ Don't worry, the original ``~/.profile`` is backed up at
 installing to a temporary directory instead, run ``dotplate --dest
 path/to/temp/dir install``.
 
-See `the dotplate documentation <Documentation_>`_ for more information.
+..
+    See `the dotplate documentation <Documentation_>`_ for more information.
