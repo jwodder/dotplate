@@ -1,0 +1,11 @@
+[core]
+src = "templates"
+dest = "~"
+
+[vars]
+editor = "vim"
+
+additional_paths = [
+   "$HOME/local/bin",
+   "$HOME/.cargo/bin",
+]
