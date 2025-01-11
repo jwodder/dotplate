@@ -55,7 +55,7 @@ class Dotplate:
     def _ensure_templates(self) -> list[tuple[str, SuiteSet]]:
         if self._templates is None:
             suitemap = self.cfg.paths2suites()
-            templates = listdir(self.dest)
+            templates = listdir(self.src)
             # listdir() should return the paths in sorted order, but just to be
             # sure…
             templates.sort()
@@ -94,7 +94,8 @@ class Dotplate:
         return RenderedFile(
             content=tmplobj.render(
                 self.get_context(template=template, dest_path=dest_path)
-            ),
+            )
+            + "\n",
             template=template,
             executable=is_executable(self.src / template),
             dest_path=dest_path,

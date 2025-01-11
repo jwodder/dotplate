@@ -51,3 +51,33 @@ __author__ = "John Thorvald Wodder II"
 __author_email__ = "dotplate@varonathe.org"
 __license__ = "MIT"
 __url__ = "https://github.com/jwodder/dotplate"
+
+from .config import (
+    Config,
+    CoreConfig,
+    JinjaConfig,
+    LocalConfig,
+    LocalTblConfig,
+    SelectAutoescapeConfig,
+    SuiteConfig,
+)
+from .dotplate import Diff, DiffState, Dotplate, RenderedFile, XBitDiff
+from .errors import DotplateError, InactiveTemplate, TemplateNotFound
+
+__all__ = [
+    "Config",
+    "CoreConfig",
+    "Diff",
+    "DiffState",
+    "Dotplate",
+    "DotplateError",
+    "InactiveTemplate",
+    "JinjaConfig",
+    "LocalConfig",
+    "LocalTblConfig",
+    "RenderedFile",
+    "SelectAutoescapeConfig",
+    "SuiteConfig",
+    "TemplateNotFound",
+    "XBitDiff",
+]
