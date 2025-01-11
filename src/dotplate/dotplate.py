@@ -148,6 +148,7 @@ class RenderedFile:
                 dest_content = ""
                 state = DiffState.MISSING
                 xbit_diff = XBitDiff.NOCHANGE
+                mode_delta = "new file mode +x\n" if self.executable else ""
             else:
                 state = (
                     DiffState.NODIFF
@@ -157,11 +158,14 @@ class RenderedFile:
                 match (self.executable, is_executable(self.dest_path)):
                     case (True, False):
                         xbit_diff = XBitDiff.REMOVED
+                        mode_delta = "old mode -x\nnew mode +x\n"
                     case (False, True):
                         xbit_diff = XBitDiff.ADDED
+                        mode_delta = "old mode +x\nnew mode -x\n"
                     case _:
                         xbit_diff = XBitDiff.NOCHANGE
-            delta = "".join(
+                        mode_delta = ""
+            delta = mode_delta + "".join(
                 unified_diff(
                     dest_content.splitlines(True),
                     self.content.splitlines(True),

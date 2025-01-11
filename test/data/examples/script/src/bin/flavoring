@@ -1,2 +1,2 @@
 #!/bin/bash
-printf 'Who likes %s?' '{{ dotplate.vars.flavor }}'
+printf 'Who likes %s?\n' '{{ dotplate.vars.flavor }}'
