@@ -37,7 +37,7 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
             assert p1.read_text(encoding="utf-8") == p2.read_text(encoding="utf-8")
 
 
-@pytest.mark.parametrize("casedir", sorted((DATA_DIR / "end2end").iterdir()))
+@pytest.mark.parametrize("casedir", sorted((DATA_DIR / "examples").iterdir()))
 def test_end2end(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, tmp_path: Path, casedir: Path
 ) -> None:
