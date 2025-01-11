@@ -24,7 +24,7 @@ def install_prompt(rf: RenderedFile) -> PromptAction:
             case "n" | "no":
                 return PromptAction.NO
             case "d" | "diff":
-                print(rf.diff())
+                print(rf.diff().delta)
             case "a" | "all":
                 return PromptAction.ALL
             case "q" | "quit":
