@@ -25,7 +25,7 @@ def listdir(dirpath: Path) -> list[str]:
         # TODO: Try to include files staged but not yet committed
         # (Merge a variant of `git diff --cached --name-status`?)
         r = subprocess.run(
-            ["git", "ls-tree", "-r", "--name-only", "-z"],
+            ["git", "ls-tree", "-r", "--name-only", "-z", "HEAD"],
             cwd=dirpath,
             check=True,
             stdout=subprocess.PIPE,
