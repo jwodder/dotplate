@@ -117,11 +117,11 @@ class Dotplate:
         return {
             "dotplate": {
                 "suites": {
-                    "enabled": sorted(self.suites),
-                    "files": {
-                        name: list(suicfg.files)
-                        for name, suicfg in self.cfg.suites.items()
-                    },
+                    name: {
+                        "files": suicfg.files,
+                        "enabled": name in self.suites,
+                    }
+                    for name, suicfg in self.cfg.suites.items()
                 },
                 "template": template,
                 "dest_path": str(dest_path),
