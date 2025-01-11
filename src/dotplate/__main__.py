@@ -1,11 +1,15 @@
 from __future__ import annotations
 from pathlib import Path
-import readline  # noqa: F401
 import click
 from . import __version__
 from .config import Config, LocalConfig
 from .dotplate import Dotplate
 from .prompt import PromptAction, install_prompt
+
+try:
+    import readline  # noqa: F401
+except ImportError:
+    pass
 
 DEFAULT_CONFIG_PATH = Path("dotplate.toml")
 
