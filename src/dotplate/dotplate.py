@@ -147,7 +147,7 @@ class RenderedFile:
             except FileNotFoundError:
                 dest_content = ""
                 state = DiffState.MISSING
-                xbit_diff = XBitDiff.REMOVED if self.executable else XBitDiff.NOCHANGE
+                xbit_diff = XBitDiff.NOCHANGE
             else:
                 state = (
                     DiffState.NODIFF
@@ -179,11 +179,10 @@ class RenderedFile:
                 self.dest_path.parent.mkdir(parents=True, exist_ok=True)
                 with self.dest_path.open("w", encoding="utf-8") as fp:
                     fp.write(self.content)
-            if diff.xbit_diff:
-                if self.executable:
-                    set_executable_bit(self.dest_path)
-                else:
-                    unset_executable_bit(self.dest_path)
+            if self.executable:
+                set_executable_bit(self.dest_path)
+            else:
+                unset_executable_bit(self.dest_path)
 
 
 @dataclass
