@@ -39,7 +39,10 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
             assert is_executable(p1) == is_executable(p2)
 
 
-@pytest.mark.parametrize("casedir", sorted((DATA_DIR / "examples").iterdir()))
+@pytest.mark.parametrize(
+    "casedir",
+    [pytest.param(p, id=p.name) for p in sorted((DATA_DIR / "examples").iterdir())],
+)
 def test_install(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, tmp_path: Path, casedir: Path
 ) -> None:
