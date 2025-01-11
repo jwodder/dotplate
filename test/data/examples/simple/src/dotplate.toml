@@ -2,12 +2,6 @@
 src = "."
 dest = "~"
 
-[jinja]
-block-start-string = "{%"
-block-end-string = "%}"
-variable-start-string = "{{"
-variable-end-string = "}}"
-
 [vars]
 editor = "vim"
 
