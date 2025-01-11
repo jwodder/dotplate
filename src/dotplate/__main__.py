@@ -30,18 +30,38 @@ def disable_suite(ctx: click.Context, _param: click.Parameter, value: str) -> st
     "--config",
     type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
     default=DEFAULT_CONFIG_PATH,
+    help="Read the primary config from the given file",
+    show_default=True,
 )
-@click.option("-d", "--dest", type=click.Path(file_okay=False, path_type=Path))
+@click.option(
+    "-d",
+    "--dest",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Install templated files in the given directory [default: set by config]",
+)
 @click.option(
     "-l",
     "--local-config",
     type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
+    help="Read the local config from the given file [default: set by config]",
 )
 @click.option(
-    "-s", "--enable-suite", multiple=True, callback=enable_suite, expose_value=False
+    "-s",
+    "--enable-suite",
+    multiple=True,
+    callback=enable_suite,
+    expose_value=False,
+    help="Enable the given suite of files",
+    metavar="SUITE",
 )
 @click.option(
-    "-S", "--disable-suite", multiple=True, callback=disable_suite, expose_value=False
+    "-S",
+    "--disable-suite",
+    multiple=True,
+    callback=disable_suite,
+    expose_value=False,
+    help="Disable the given suite of files",
+    metavar="SUITE",
 )
 @click.version_option(
     __version__,
@@ -84,21 +104,39 @@ def main(
 @click.argument("templates", nargs=-1)
 @click.pass_obj
 def diff(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
+    """
+    Render each template and output a diff between the rendered text and the
+    contents of the corresponding file in the destination directory.  If a
+    given render matches the installed file, nothing is output.
+
+    If no templates are given on the command line, all active templates are
+    diffed.
+    """
     if not templates:
         templates = tuple(dotplate.templates())
     for sp in templates:
         file = dotplate.render(sp)
         d = file.diff()
-        ### TODO: Report differences in executable bit
         if d.state:
             print(d.delta, end="")
 
 
 @main.command()
-@click.option("-y", "--yes", is_flag=True)
+@click.option(
+    "-y",
+    "--yes",
+    is_flag=True,
+    help="Install all active templates without prompting for confirmation",
+)
 @click.argument("templates", nargs=-1)
 @click.pass_obj
 def install(dotplate: Dotplate, templates: tuple[str, ...], yes: bool) -> None:
+    """
+    Render & install the given templates in the destination directory.
+
+    If no templates are given on the command line, all active templates are
+    diffed.
+    """
     if not templates:
         templates = tuple(dotplate.templates())
     files = [dotplate.render(p) for p in templates]
@@ -122,6 +160,7 @@ def install(dotplate: Dotplate, templates: tuple[str, ...], yes: bool) -> None:
 @main.command("list")
 @click.pass_obj
 def list_cmd(dotplate: Dotplate) -> None:
+    """List all active templates"""
     for sp in dotplate.templates():
         print(sp)
 
@@ -130,6 +169,7 @@ def list_cmd(dotplate: Dotplate) -> None:
 @click.pass_obj
 @click.argument("template")
 def render(dotplate: Dotplate, template: str) -> None:
+    """Render the given template and output the resulting text"""
     f = dotplate.render(template)
     print(f.content, end="")
 
