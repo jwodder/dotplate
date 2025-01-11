@@ -110,6 +110,7 @@ def install(dotplate: Dotplate, templates: tuple[str, ...], yes: bool) -> None:
                 action = PromptAction.YES
         if action is PromptAction.YES:
             f.install()
+            print(f"Installed {f.template} at {f.dest_path}")
         elif action is PromptAction.QUIT:
             break
 
