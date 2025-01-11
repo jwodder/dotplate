@@ -68,7 +68,7 @@ def test_simple_missing(tmp_home: Path, tmp_path: Path) -> None:
         "+export EDITOR=vim\n"
     )
     assert diff.state is DiffState.MISSING
-    assert diff.xbit_diff is XBitDiff.NOCHANGE
+    assert diff.xbit_diff is XBitDiff.MISSING_UNSET
 
 
 @unix_only
@@ -199,4 +199,4 @@ def test_script_missing(tmp_home: Path, tmp_path: Path) -> None:
         "+printf 'Who likes %s?\\n' 'licorice'\n"
     )
     assert diff.state is DiffState.MISSING
-    assert diff.xbit_diff is XBitDiff.NOCHANGE
+    assert diff.xbit_diff is XBitDiff.MISSING_SET

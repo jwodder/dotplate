@@ -147,8 +147,9 @@ class RenderedFile:
             except FileNotFoundError:
                 dest_content = ""
                 state = DiffState.MISSING
-                xbit_diff = XBitDiff.NOCHANGE
-                mode_delta = "new file mode +x\n" if self.executable else ""
+                xbit_diff = (
+                    XBitDiff.MISSING_SET if self.executable else XBitDiff.MISSING_UNSET
+                )
             else:
                 state = (
                     DiffState.NODIFF
@@ -158,14 +159,11 @@ class RenderedFile:
                 match (self.executable, is_executable(self.dest_path)):
                     case (True, False):
                         xbit_diff = XBitDiff.REMOVED
-                        mode_delta = "old mode -x\nnew mode +x\n"
                     case (False, True):
                         xbit_diff = XBitDiff.ADDED
-                        mode_delta = "old mode +x\nnew mode -x\n"
                     case _:
                         xbit_diff = XBitDiff.NOCHANGE
-                        mode_delta = ""
-            delta = mode_delta + "".join(
+            delta = xbit_diff.diff_header() + "".join(
                 unified_diff(
                     dest_content.splitlines(True),
                     self.content.splitlines(True),
@@ -220,8 +218,33 @@ class XBitDiff(Enum):
     # Executable bit is set on src file but not dest file
     REMOVED = 2
 
+    # The dest file does not exist, and the executable bit is set on the src
+    # file
+    MISSING_SET = 3
+
+    # The dest file does not exist, and the executable bit is not set on the
+    # src file
+    MISSING_UNSET = 4
+
     # Executable bit is the same between files
-    NOCHANGE = 3
+    NOCHANGE = 5
 
     def __bool__(self) -> bool:
         return self != XBitDiff.NOCHANGE
+
+    def diff_header(self) -> str:
+        match self:
+            case XBitDiff.ADDED:
+                return "old mode +x\nnew mode -x\n"
+            case XBitDiff.REMOVED:
+                return "old mode -x\nnew mode +x\n"
+            case XBitDiff.MISSING_SET:
+                return "new file mode +x\n"
+            case XBitDiff.MISSING_UNSET:
+                return ""
+            case XBitDiff.NOCHANGE:
+                return ""
+            case _:
+                raise AssertionError(  # pragma: no cover
+                    f"Unhandled case in XBitDiff.diff_header: {self!r}"
+                )
