@@ -36,7 +36,7 @@ def test_simple_changed(tmp_home: Path, tmp_path: Path) -> None:
     assert bool(diff)
     assert diff.delta == (
         "--- .profile\n"
-        f"+++ {tmp_home}/.profile\n"
+        f"+++ {tmp_home / '.profile'}\n"
         "@@ -1,2 +1,2 @@\n"
         '-export PATH="$PATH:$HOME/local/bin"\n'
         '+export PATH="$PATH:$HOME/local/bin:$HOME/.cargo/bin"\n'
@@ -56,7 +56,7 @@ def test_simple_missing(tmp_home: Path, tmp_path: Path) -> None:
     assert bool(diff)
     assert diff.delta == (
         "--- .profile\n"
-        f"+++ {tmp_home}/.profile\n"
+        f"+++ {tmp_home / '.profile'}\n"
         "@@ -0,0 +1,2 @@\n"
         '+export PATH="$PATH:$HOME/local/bin:$HOME/.cargo/bin"\n'
         "+export EDITOR=vim\n"
@@ -98,7 +98,7 @@ def test_simple_changed_xbit_added(tmp_home: Path, tmp_path: Path) -> None:
         "old mode +x\n"
         "new mode -x\n"
         "--- .profile\n"
-        f"+++ {tmp_home}/.profile\n"
+        f"+++ {tmp_home / '.profile'}\n"
         "@@ -1,2 +1,2 @@\n"
         '-export PATH="$PATH:$HOME/local/bin"\n'
         '+export PATH="$PATH:$HOME/local/bin:$HOME/.cargo/bin"\n'
@@ -161,7 +161,7 @@ def test_script_changed_xbit_removed(tmp_home: Path, tmp_path: Path) -> None:
         "old mode -x\n"
         "new mode +x\n"
         "--- bin/flavoring\n"
-        f"+++ {tmp_home}/bin/flavoring\n"
+        f"+++ {tmp_home / 'bin' / 'flavoring'}\n"
         "@@ -1,2 +1,2 @@\n"
         " #!/bin/bash\n"
         "-printf 'Who likes %s?\\n' 'cinnamon'\n"
@@ -182,7 +182,7 @@ def test_script_missing(tmp_home: Path, tmp_path: Path) -> None:
     assert diff.delta == (
         "new file mode +x\n"
         "--- bin/flavoring\n"
-        f"+++ {tmp_home}/bin/flavoring\n"
+        f"+++ {tmp_home / 'bin' / 'flavoring'}\n"
         "@@ -0,0 +1,2 @@\n"
         "+#!/bin/bash\n"
         "+printf 'Who likes %s?\\n' 'licorice'\n"
