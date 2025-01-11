@@ -7,16 +7,16 @@ class DotplateError(Exception):
 
 
 @dataclass
-class SrcPathNotFound(DotplateError):
-    src_path: str
+class TemplateNotFound(DotplateError):
+    template: str
 
     def __str__(self) -> str:
-        return f"No such src path: {self.src_path}"
+        return f"Template not found: {self.template}"
 
 
 @dataclass
-class InactiveSrcPath(DotplateError):
-    src_path: str
+class InactiveTemplate(DotplateError):
+    template: str
 
     def __str__(self) -> str:
-        return f"src path is not active: {self.src_path}"
+        return f"Template is not active: {self.template}"

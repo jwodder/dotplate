@@ -75,12 +75,12 @@ def main(
 
 
 @main.command()
-@click.argument("src_paths", nargs=-1)
+@click.argument("templates", nargs=-1)
 @click.pass_obj
-def diff(dotplate: Dotplate, src_paths: tuple[str, ...]) -> None:
-    if not src_paths:
-        src_paths = tuple(dotplate.src_paths())
-    for sp in src_paths:
+def diff(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
+    if not templates:
+        templates = tuple(dotplate.templates())
+    for sp in templates:
         file = dotplate.render(sp)
         d = file.diff()
         ### TODO: Report differences in executable bit
@@ -89,26 +89,26 @@ def diff(dotplate: Dotplate, src_paths: tuple[str, ...]) -> None:
 
 
 @main.command()
-@click.argument("src_paths", nargs=-1)
+@click.argument("templates", nargs=-1)
 @click.pass_obj
-def install(dotplate: Dotplate, src_paths: tuple[str, ...]) -> None:
-    if not src_paths:
-        src_paths = tuple(dotplate.src_paths())
-    dotplate.install(list(src_paths) or None)
+def install(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
+    if not templates:
+        templates = tuple(dotplate.templates())
+    dotplate.install(list(templates) or None)
 
 
 @main.command("list")
 @click.pass_obj
 def list_cmd(dotplate: Dotplate) -> None:
-    for sp in dotplate.src_paths():
+    for sp in dotplate.templates():
         print(sp)
 
 
 @main.command()
 @click.pass_obj
-@click.argument("src_path")
-def render(dotplate: Dotplate, src_path: str) -> None:
-    f = dotplate.render(src_path)
+@click.argument("template")
+def render(dotplate: Dotplate, template: str) -> None:
+    f = dotplate.render(template)
     print(f.content, end="")
 
 

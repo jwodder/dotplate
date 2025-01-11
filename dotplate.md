@@ -19,8 +19,6 @@ want
       ignored
     - usable as a Python library
 
-- Come up with a better name for "src paths"
-
 - Other possible features:
     - Support running scripts to generate config to augment/take the place of
       the machine-specific config
@@ -39,6 +37,7 @@ want
     - Disallow suite names that don't correspond to a suite in the config file
     - Add an option for merging global & local vars via recursive dict merging?
     - Support setting a custom external command for diffing with
+    - Deleting inactive files from the dest dir
 
 - Config file:
     - TOML
@@ -59,7 +58,7 @@ want
                 - If not set, not used
         - `[jinja]` — Jinja config
         - `[suites.NAME]`
-            - `files: list[str]` — list of src paths of files in the suite
+            - `files: list[str]` — list of files in the suite, relative to src
             - `enabled: bool = False` — whether the suite is enabled by default
         - `[vars]` — extra variables usable in templates
             - can be extended via local config
@@ -83,19 +82,19 @@ want
     - `dest` path
 
 - Subcommands:
-    - `install [src-path ...]`
-        - `src-path` is relative to `src` (and also `dest`)
-        - Installs everything if no `src-path` given
-        - `src-path` can be a directory to install everything therein
+    - `install [template ...]`
+        - `template` is relative to `src` (and also `dest`)
+        - Installs everything if no `template` given
+        - `template` can be a directory to install everything therein
         - has options for whether to create backups of replaced files
         - Unless a `--yes` option is given, for each file that would be
           installed, you are asked whether you want to install it, and you have
           the option to view a diff at this time
     - `list` — list all paths that would be installed (whether they differ or
       not)
-    - `render <src-path>` — print templated content of file
-    - `diff [src-path ...]`
-        - Diffs everything if no `src-path` given
+    - `render <template>` — print templated content of file
+    - `diff [template ...]`
+        - Diffs everything if no `template` given
         - Have a short mode that just lists all files and whether they differ?
             - Add an option for only listing files that differ
     - [dump Jinja context var?]
@@ -110,7 +109,7 @@ want
         - stuff from `platform`?
     - `suites`
         - `enabled`: `list[str]`
-        - `files` — map from suite names to their src paths
+        - `files` — map from suite names to their templates
     - `dest` — absolutized path
     - `vars` — extra variables defined in config file
 
@@ -137,9 +136,9 @@ want
     - `Dotplate`:
         - `enable_suite(suite: str)`
         - `disable_suite(suite: str)`
-        - `src_paths() -> list[str]`
-        - `render(src_path: str) -> RenderedFile`
-        - `install(src_paths: list[str] | None) -> None`
+        - `templates() -> list[str]`
+        - `render(template: str) -> RenderedFile`
+        - `install(templates: list[str] | None) -> None`
         - [get & manipulate the context]
     - `RenderedFile`
         - public: `__init__(content: str, relative_path: Path, dest: Path, executable: bool = False) -> None`

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from jinja2 import Environment
 from .config import Config
-from .errors import InactiveSrcPath, SrcPathNotFound
+from .errors import InactiveTemplate, TemplateNotFound
 from .util import (
     SuiteSet,
     backup,
@@ -26,8 +26,8 @@ class Dotplate:
     suites: set[str]
     jinja_env: Environment
     dest: Path
-    # Src paths are in sorted order:
-    _src_paths: list[tuple[str, SuiteSet]] | None = field(init=False, default=None)
+    # Templates are in sorted order:
+    _templates: list[tuple[str, SuiteSet]] | None = field(init=False, default=None)
 
     @classmethod
     def from_config_file(cls, cfgfile: str | Path) -> Dotplate:
@@ -52,66 +52,66 @@ class Dotplate:
     def src(self) -> Path:
         return self.cfg.core.src
 
-    def _ensure_src_paths(self) -> list[tuple[str, SuiteSet]]:
-        if self._src_paths is None:
+    def _ensure_templates(self) -> list[tuple[str, SuiteSet]]:
+        if self._templates is None:
             suitemap = self.cfg.paths2suites()
-            src_paths = listdir(self.dest)
+            templates = listdir(self.dest)
             # listdir() should return the paths in sorted order, but just to be
             # sure…
-            src_paths.sort()
+            templates.sort()
             if self.cfg._exclude_config_path is not None:
                 try:
-                    src_paths.remove(self.cfg._exclude_config_path)
+                    templates.remove(self.cfg._exclude_config_path)
                 except ValueError:
                     pass
-            self._src_paths = [(path, suitemap[path]) for path in src_paths]
-        return self._src_paths
+            self._templates = [(path, suitemap[path]) for path in templates]
+        return self._templates
 
-    def src_paths(self) -> list[str]:
-        src_paths = self._ensure_src_paths()
+    def templates(self) -> list[str]:
+        templates = self._ensure_templates()
         return [
             path
-            for (path, suiteset) in src_paths
+            for (path, suiteset) in templates
             if suiteset.is_file_active(self.suites)
         ]
 
-    def is_active(self, src_path: str) -> bool:
-        src_paths = self._ensure_src_paths()
-        if not src_paths:
-            raise SrcPathNotFound(src_path)
-        i = bisect_left(src_paths, src_path, key=itemgetter(0))
-        (sp, suiteset) = src_paths[i]
-        if sp != src_path:
-            raise SrcPathNotFound(src_path)
+    def is_active(self, template: str) -> bool:
+        templates = self._ensure_templates()
+        if not templates:
+            raise TemplateNotFound(template)
+        i = bisect_left(templates, template, key=itemgetter(0))
+        (sp, suiteset) = templates[i]
+        if sp != template:
+            raise TemplateNotFound(template)
         return suiteset.is_file_active(self.suites)
 
-    def render(self, src_path: str, dest_path: Path | None = None) -> RenderedFile:
-        if not self.is_active(src_path):
-            raise InactiveSrcPath(src_path)
-        template = self.jinja_env.get_template(src_path)
+    def render(self, template: str, dest_path: Path | None = None) -> RenderedFile:
+        if not self.is_active(template):
+            raise InactiveTemplate(template)
+        tmplobj = self.jinja_env.get_template(template)
         if dest_path is None:
-            dest_path = self.dest / src_path
+            dest_path = self.dest / template
         return RenderedFile(
-            content=template.render(
-                self.get_context(src_path=src_path, dest_path=dest_path)
+            content=tmplobj.render(
+                self.get_context(template=template, dest_path=dest_path)
             ),
-            src_path=src_path,
-            executable=is_executable(self.src / src_path),
+            template=template,
+            executable=is_executable(self.src / template),
             dest_path=dest_path,
             backup_ext=self.cfg.core.backup_ext,
         )
 
-    def install_path(self, src_path: str, dest_path: Path | None = None) -> None:
-        self.render(src_path, dest_path).install()
+    def install_path(self, template: str, dest_path: Path | None = None) -> None:
+        self.render(template, dest_path).install()
 
-    def install(self, src_paths: list[str] | None = None) -> None:
-        if src_paths is None:
-            src_paths = self.src_paths()
-        files = [self.render(p) for p in src_paths]
+    def install(self, templates: list[str] | None = None) -> None:
+        if templates is None:
+            templates = self.templates()
+        files = [self.render(p) for p in templates]
         for f in files:
             f.install()
 
-    def get_context(self, src_path: str, dest_path: Path) -> dict[str, Any]:
+    def get_context(self, template: str, dest_path: Path) -> dict[str, Any]:
         # Returns a fresh dict on each invocation
         return {
             "dotplate": {
@@ -122,7 +122,7 @@ class Dotplate:
                         for name, suicfg in self.cfg.suites.items()
                     },
                 },
-                "src_path": src_path,
+                "template": template,
                 "dest_path": str(dest_path),
                 "vars": self.vars.copy(),
             }
@@ -132,7 +132,7 @@ class Dotplate:
 @dataclass
 class RenderedFile:
     content: str
-    src_path: str
+    template: str
     dest_path: Path
     backup_ext: str
     executable: bool = False
@@ -160,7 +160,7 @@ class RenderedFile:
             unified_diff(
                 dest_content.splitlines(True),
                 self.content.splitlines(True),
-                fromfile=self.src_path,
+                fromfile=self.template,
                 tofile=str(self.dest_path),
             )
         )
