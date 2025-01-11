@@ -1,9 +1,11 @@
 from __future__ import annotations
 from pathlib import Path
+import readline  # noqa: F401
 import click
 from . import __version__
 from .config import Config, LocalConfig
 from .dotplate import Dotplate
+from .prompt import PromptAction, install_prompt
 
 DEFAULT_CONFIG_PATH = Path("dotplate.toml")
 
@@ -89,12 +91,27 @@ def diff(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
 
 
 @main.command()
+@click.option("-y", "--yes", is_flag=True)
 @click.argument("templates", nargs=-1)
 @click.pass_obj
-def install(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
+def install(dotplate: Dotplate, templates: tuple[str, ...], yes: bool) -> None:
     if not templates:
         templates = tuple(dotplate.templates())
-    dotplate.install(list(templates) or None)
+    files = [dotplate.render(p) for p in templates]
+    for f in files:
+        if not f.diff():
+            continue
+        if yes:
+            action = PromptAction.YES
+        else:
+            action = install_prompt(f)
+            if action is PromptAction.ALL:
+                yes = True
+                action = PromptAction.YES
+        if action is PromptAction.YES:
+            f.install()
+        elif action is PromptAction.QUIT:
+            break
 
 
 @main.command("list")

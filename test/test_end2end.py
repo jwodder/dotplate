@@ -44,6 +44,6 @@ def test_end2end(
     tmp_path /= "tmp"  # copytree() can't copy to a dir that already exists
     copytree(casedir / "src", tmp_path)
     monkeypatch.chdir(tmp_path)
-    r = CliRunner().invoke(main, ["install"], standalone_mode=False)
+    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
     assert_dirtrees_eq(tmp_home, casedir / "dest")

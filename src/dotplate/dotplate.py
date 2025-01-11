@@ -137,35 +137,40 @@ class RenderedFile:
     dest_path: Path
     backup_ext: str
     executable: bool = False
+    _diff: Diff | None = field(init=False, default=None)
 
     def diff(self) -> Diff:
-        try:
-            with self.dest_path.open("r", encoding="utf-8") as fp:
-                dest_content = fp.read()
-        except FileNotFoundError:
-            dest_content = ""
-            state = DiffState.MISSING
-            xbit_diff = XBitDiff.REMOVED if self.executable else XBitDiff.NOCHANGE
-        else:
-            state = (
-                DiffState.NODIFF if dest_content == self.content else DiffState.CHANGED
+        if self._diff is None:
+            try:
+                with self.dest_path.open("r", encoding="utf-8") as fp:
+                    dest_content = fp.read()
+            except FileNotFoundError:
+                dest_content = ""
+                state = DiffState.MISSING
+                xbit_diff = XBitDiff.REMOVED if self.executable else XBitDiff.NOCHANGE
+            else:
+                state = (
+                    DiffState.NODIFF
+                    if dest_content == self.content
+                    else DiffState.CHANGED
+                )
+                match (self.executable, is_executable(self.dest_path)):
+                    case (True, False):
+                        xbit_diff = XBitDiff.REMOVED
+                    case (False, True):
+                        xbit_diff = XBitDiff.ADDED
+                    case _:
+                        xbit_diff = XBitDiff.NOCHANGE
+            delta = "".join(
+                unified_diff(
+                    dest_content.splitlines(True),
+                    self.content.splitlines(True),
+                    fromfile=self.template,
+                    tofile=str(self.dest_path),
+                )
             )
-            match (self.executable, is_executable(self.dest_path)):
-                case (True, False):
-                    xbit_diff = XBitDiff.REMOVED
-                case (False, True):
-                    xbit_diff = XBitDiff.ADDED
-                case _:
-                    xbit_diff = XBitDiff.NOCHANGE
-        delta = "".join(
-            unified_diff(
-                dest_content.splitlines(True),
-                self.content.splitlines(True),
-                fromfile=self.template,
-                tofile=str(self.dest_path),
-            )
-        )
-        return Diff(delta=delta, state=state, xbit_diff=xbit_diff)
+            self._diff = Diff(delta=delta, state=state, xbit_diff=xbit_diff)
+        return self._diff
 
     def install(self) -> None:
         if diff := self.diff():
