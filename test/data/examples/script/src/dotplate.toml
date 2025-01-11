@@ -1,0 +1,6 @@
+[core]
+src = "."
+dest = "~"
+
+[vars]
+flavor = "licorice"

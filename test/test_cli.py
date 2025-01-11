@@ -1,11 +1,12 @@
 from __future__ import annotations
 from operator import attrgetter
 from pathlib import Path
-from shutil import copytree
+import shutil
 from traceback import format_exception
 from click.testing import CliRunner, Result
 import pytest
 from dotplate.__main__ import main
+from dotplate.util import is_executable
 
 DATA_DIR = Path(__file__).with_name("data")
 
@@ -35,14 +36,14 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
             assert_dirtrees_eq(p1, p2)
         else:
             assert p1.read_text(encoding="utf-8") == p2.read_text(encoding="utf-8")
+            assert is_executable(p1) == is_executable(p2)
 
 
 @pytest.mark.parametrize("casedir", sorted((DATA_DIR / "examples").iterdir()))
-def test_end2end(
+def test_install(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, tmp_path: Path, casedir: Path
 ) -> None:
-    tmp_path /= "tmp"  # copytree() can't copy to a dir that already exists
-    copytree(casedir / "src", tmp_path)
+    shutil.copytree(casedir / "src", tmp_path, dirs_exist_ok=True)
     monkeypatch.chdir(tmp_path)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
