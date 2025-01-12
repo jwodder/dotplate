@@ -1,14 +1,12 @@
 from __future__ import annotations
 from operator import attrgetter
 from pathlib import Path
-import shutil
 from traceback import format_exception
 from click.testing import CliRunner, Result
+from conftest import CaseDirs
 import pytest
 from dotplate.__main__ import main
 from dotplate.util import is_executable
-
-DATA_DIR = Path(__file__).with_name("data")
 
 
 def show_result(r: Result) -> str:
@@ -39,15 +37,37 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
             assert is_executable(p1) == is_executable(p2)
 
 
-@pytest.mark.parametrize(
-    "casedir",
-    [pytest.param(p, id=p.name) for p in sorted((DATA_DIR / "examples").iterdir())],
-)
-def test_install(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, tmp_path: Path, casedir: Path
+def test_install_simple(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, simple: CaseDirs
 ) -> None:
-    shutil.copytree(casedir / "src", tmp_path, dirs_exist_ok=True)
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.chdir(simple.src)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, casedir / "dest")
+    assert_dirtrees_eq(tmp_home, simple.dest)
+
+
+def test_install_custom_brackets(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, custom_brackets: CaseDirs
+) -> None:
+    monkeypatch.chdir(custom_brackets.src)
+    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, custom_brackets.dest)
+
+
+def test_install_next_to_src(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, next_to_src: CaseDirs
+) -> None:
+    monkeypatch.chdir(next_to_src.src)
+    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, next_to_src.dest)
+
+
+def test_install_script(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, script: CaseDirs
+) -> None:
+    monkeypatch.chdir(script.src)
+    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, script.dest)

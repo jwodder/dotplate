@@ -2,25 +2,19 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import shutil
+from conftest import CaseDirs
 import pytest
 from dotplate import DiffState, Dotplate, XBitDiff
 from dotplate.util import set_executable_bit, unset_executable_bit
-
-DATA_DIR = Path(__file__).with_name("data")
 
 unix_only = pytest.mark.skipif(
     os.name != "posix", reason="Windows doesn't support executability"
 )
 
 
-def test_simple_nodiff(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "simple" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
-    shutil.copyfile(
-        DATA_DIR / "examples" / "simple" / "dest" / ".profile", tmp_home / ".profile"
-    )
+def test_simple_nodiff(tmp_home: Path, simple: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
+    shutil.copyfile(simple.dest / ".profile", tmp_home / ".profile")
     rf = dp.render(".profile")
     diff = rf.diff()
     assert not bool(diff)
@@ -29,11 +23,8 @@ def test_simple_nodiff(tmp_home: Path, tmp_path: Path) -> None:
     assert diff.xbit_diff is XBitDiff.NOCHANGE
 
 
-def test_simple_changed(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "simple" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_simple_changed(tmp_home: Path, simple: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
     (tmp_home / ".profile").write_text(
         'export PATH="$PATH:$HOME/local/bin"\nexport EDITOR=vim\n'
     )
@@ -52,11 +43,8 @@ def test_simple_changed(tmp_home: Path, tmp_path: Path) -> None:
     assert diff.xbit_diff is XBitDiff.NOCHANGE
 
 
-def test_simple_missing(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "simple" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_simple_missing(tmp_home: Path, simple: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
     rf = dp.render(".profile")
     diff = rf.diff()
     assert bool(diff)
@@ -72,14 +60,9 @@ def test_simple_missing(tmp_home: Path, tmp_path: Path) -> None:
 
 
 @unix_only
-def test_simple_xbit_added(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "simple" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
-    shutil.copyfile(
-        DATA_DIR / "examples" / "simple" / "dest" / ".profile", tmp_home / ".profile"
-    )
+def test_simple_xbit_added(tmp_home: Path, simple: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
+    shutil.copyfile(simple.dest / ".profile", tmp_home / ".profile")
     set_executable_bit(tmp_home / ".profile")
     rf = dp.render(".profile")
     diff = rf.diff()
@@ -90,11 +73,8 @@ def test_simple_xbit_added(tmp_home: Path, tmp_path: Path) -> None:
 
 
 @unix_only
-def test_simple_changed_xbit_added(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "simple" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_simple_changed_xbit_added(tmp_home: Path, simple: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
     (tmp_home / ".profile").write_text(
         'export PATH="$PATH:$HOME/local/bin"\nexport EDITOR=vim\n'
     )
@@ -116,14 +96,11 @@ def test_simple_changed_xbit_added(tmp_home: Path, tmp_path: Path) -> None:
     assert diff.xbit_diff is XBitDiff.ADDED
 
 
-def test_script_nodiff(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "script" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_script_nodiff(tmp_home: Path, script: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
     (tmp_home / "bin").mkdir()
     shutil.copy(
-        DATA_DIR / "examples" / "script" / "dest" / "bin" / "flavoring",
+        script.dest / "bin" / "flavoring",
         tmp_home / "bin" / "flavoring",
     )
     rf = dp.render("bin/flavoring")
@@ -135,14 +112,11 @@ def test_script_nodiff(tmp_home: Path, tmp_path: Path) -> None:
 
 
 @unix_only
-def test_script_xbit_removed(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "script" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_script_xbit_removed(tmp_home: Path, script: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
     (tmp_home / "bin").mkdir()
     shutil.copy(
-        DATA_DIR / "examples" / "script" / "dest" / "bin" / "flavoring",
+        script.dest / "bin" / "flavoring",
         tmp_home / "bin" / "flavoring",
     )
     unset_executable_bit(tmp_home / "bin" / "flavoring")
@@ -155,11 +129,8 @@ def test_script_xbit_removed(tmp_home: Path, tmp_path: Path) -> None:
 
 
 @unix_only
-def test_script_changed_xbit_removed(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "script" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_script_changed_xbit_removed(tmp_home: Path, script: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
     (tmp_home / "bin").mkdir()
     (tmp_home / "bin" / "flavoring").write_text(
         "#!/bin/bash\n" "printf 'Who likes %s?\\n' 'cinnamon'\n"
@@ -182,11 +153,8 @@ def test_script_changed_xbit_removed(tmp_home: Path, tmp_path: Path) -> None:
 
 
 @unix_only
-def test_script_missing(tmp_home: Path, tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "script" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
+def test_script_missing(tmp_home: Path, script: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
     rf = dp.render("bin/flavoring")
     diff = rf.diff()
     assert bool(diff)
