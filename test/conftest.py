@@ -1,5 +1,4 @@
 from __future__ import annotations
-from collections.abc import Callable
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -59,12 +58,5 @@ def casedirs(
     shutil.copytree(casedir / "src", src, dirs_exist_ok=True)
     if (specfile := (casedir / "which-mock.json")).exists():
         spec = json.loads(specfile.read_text(encoding="utf-8"))
-        mocker.patch("shutil.which", side_effect=make_which_mock(spec))
+        mocker.patch("shutil.which", side_effect=spec.__getitem__)
     return CaseDirs(src=src, dest=casedir / "dest")
-
-
-def make_which_mock(spec: dict[str, str | None]) -> Callable[[str], str | None]:
-    def which_mock(cmd: str) -> str | None:
-        return spec[cmd]
-
-    return which_mock
