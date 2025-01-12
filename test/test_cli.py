@@ -37,37 +37,41 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
             assert is_executable(p1) == is_executable(p2)
 
 
+@pytest.mark.usecase("simple")
 def test_install_simple(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, simple: CaseDirs
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
-    monkeypatch.chdir(simple.src)
+    monkeypatch.chdir(casedirs.src)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, simple.dest)
+    assert_dirtrees_eq(tmp_home, casedirs.dest)
 
 
+@pytest.mark.usecase("custom-brackets")
 def test_install_custom_brackets(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, custom_brackets: CaseDirs
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
-    monkeypatch.chdir(custom_brackets.src)
+    monkeypatch.chdir(casedirs.src)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, custom_brackets.dest)
+    assert_dirtrees_eq(tmp_home, casedirs.dest)
 
 
+@pytest.mark.usecase("next-to-src")
 def test_install_next_to_src(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, next_to_src: CaseDirs
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
-    monkeypatch.chdir(next_to_src.src)
+    monkeypatch.chdir(casedirs.src)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, next_to_src.dest)
+    assert_dirtrees_eq(tmp_home, casedirs.dest)
 
 
+@pytest.mark.usecase("script")
 def test_install_script(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, script: CaseDirs
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
-    monkeypatch.chdir(script.src)
+    monkeypatch.chdir(casedirs.src)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, script.dest)
+    assert_dirtrees_eq(tmp_home, casedirs.dest)

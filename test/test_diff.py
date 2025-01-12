@@ -12,9 +12,10 @@ unix_only = pytest.mark.skipif(
 )
 
 
-def test_simple_nodiff(tmp_home: Path, simple: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
-    shutil.copyfile(simple.dest / ".profile", tmp_home / ".profile")
+@pytest.mark.usecase("simple")
+def test_simple_nodiff(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
+    shutil.copyfile(casedirs.dest / ".profile", tmp_home / ".profile")
     rf = dp.render(".profile")
     diff = rf.diff()
     assert not bool(diff)
@@ -23,8 +24,9 @@ def test_simple_nodiff(tmp_home: Path, simple: CaseDirs) -> None:
     assert diff.xbit_diff is XBitDiff.NOCHANGE
 
 
-def test_simple_changed(tmp_home: Path, simple: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
+@pytest.mark.usecase("simple")
+def test_simple_changed(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     (tmp_home / ".profile").write_text(
         'export PATH="$PATH:$HOME/local/bin"\nexport EDITOR=vim\n'
     )
@@ -43,8 +45,9 @@ def test_simple_changed(tmp_home: Path, simple: CaseDirs) -> None:
     assert diff.xbit_diff is XBitDiff.NOCHANGE
 
 
-def test_simple_missing(tmp_home: Path, simple: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
+@pytest.mark.usecase("simple")
+def test_simple_missing(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     rf = dp.render(".profile")
     diff = rf.diff()
     assert bool(diff)
@@ -60,9 +63,10 @@ def test_simple_missing(tmp_home: Path, simple: CaseDirs) -> None:
 
 
 @unix_only
-def test_simple_xbit_added(tmp_home: Path, simple: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
-    shutil.copyfile(simple.dest / ".profile", tmp_home / ".profile")
+@pytest.mark.usecase("simple")
+def test_simple_xbit_added(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
+    shutil.copyfile(casedirs.dest / ".profile", tmp_home / ".profile")
     set_executable_bit(tmp_home / ".profile")
     rf = dp.render(".profile")
     diff = rf.diff()
@@ -73,8 +77,9 @@ def test_simple_xbit_added(tmp_home: Path, simple: CaseDirs) -> None:
 
 
 @unix_only
-def test_simple_changed_xbit_added(tmp_home: Path, simple: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(simple.src / "dotplate.toml")
+@pytest.mark.usecase("simple")
+def test_simple_changed_xbit_added(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     (tmp_home / ".profile").write_text(
         'export PATH="$PATH:$HOME/local/bin"\nexport EDITOR=vim\n'
     )
@@ -96,11 +101,12 @@ def test_simple_changed_xbit_added(tmp_home: Path, simple: CaseDirs) -> None:
     assert diff.xbit_diff is XBitDiff.ADDED
 
 
-def test_script_nodiff(tmp_home: Path, script: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
+@pytest.mark.usecase("script")
+def test_script_nodiff(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     (tmp_home / "bin").mkdir()
     shutil.copy(
-        script.dest / "bin" / "flavoring",
+        casedirs.dest / "bin" / "flavoring",
         tmp_home / "bin" / "flavoring",
     )
     rf = dp.render("bin/flavoring")
@@ -112,11 +118,12 @@ def test_script_nodiff(tmp_home: Path, script: CaseDirs) -> None:
 
 
 @unix_only
-def test_script_xbit_removed(tmp_home: Path, script: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
+@pytest.mark.usecase("script")
+def test_script_xbit_removed(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     (tmp_home / "bin").mkdir()
     shutil.copy(
-        script.dest / "bin" / "flavoring",
+        casedirs.dest / "bin" / "flavoring",
         tmp_home / "bin" / "flavoring",
     )
     unset_executable_bit(tmp_home / "bin" / "flavoring")
@@ -129,8 +136,9 @@ def test_script_xbit_removed(tmp_home: Path, script: CaseDirs) -> None:
 
 
 @unix_only
-def test_script_changed_xbit_removed(tmp_home: Path, script: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
+@pytest.mark.usecase("script")
+def test_script_changed_xbit_removed(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     (tmp_home / "bin").mkdir()
     (tmp_home / "bin" / "flavoring").write_text(
         "#!/bin/bash\n" "printf 'Who likes %s?\\n' 'cinnamon'\n"
@@ -153,8 +161,9 @@ def test_script_changed_xbit_removed(tmp_home: Path, script: CaseDirs) -> None:
 
 
 @unix_only
-def test_script_missing(tmp_home: Path, script: CaseDirs) -> None:
-    dp = Dotplate.from_config_file(script.src / "dotplate.toml")
+@pytest.mark.usecase("script")
+def test_script_missing(tmp_home: Path, casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
     rf = dp.render("bin/flavoring")
     diff = rf.diff()
     assert bool(diff)

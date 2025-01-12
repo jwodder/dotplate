@@ -1,5 +1,4 @@
 from __future__ import annotations
-from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 import shutil
@@ -36,18 +35,18 @@ class CaseDirs:
     dest: Path  # directory in this repository
 
 
-def case_fixture(name: str) -> Callable[..., CaseDirs]:
-    @pytest.fixture(name=name.replace("-", "_"))
-    def fixture(tmp_path_factory: pytest.TempPathFactory) -> CaseDirs:
+@pytest.fixture
+def casedirs(
+    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+) -> CaseDirs:
+    if (mark := request.node.get_closest_marker("usecase")) is not None:
+        try:
+            (name,) = mark.args
+        except ValueError:
+            raise pytest.UsageError("usecase takes exactly one argument")
         casedir = DATA_DIR / "cases" / name
         src = tmp_path_factory.mktemp(f"{name}_src")
         shutil.copytree(casedir / "src", src, dirs_exist_ok=True)
         return CaseDirs(src=src, dest=casedir / "dest")
-
-    return fixture
-
-
-custom_brackets = case_fixture("custom-brackets")
-next_to_src = case_fixture("next-to-src")
-script = case_fixture("script")
-simple = case_fixture("simple")
+    else:
+        raise pytest.UsageError("casedir fixture must be accompanied by usecase mark")
