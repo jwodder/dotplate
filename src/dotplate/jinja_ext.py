@@ -1,4 +1,5 @@
 from __future__ import annotations
+import shlex
 import shutil
 from jinja2 import Environment, Undefined, pass_environment
 from jinja2.ext import Extension
@@ -7,6 +8,7 @@ from jinja2.ext import Extension
 class DotplateExt(Extension):
     def __init__(self, env: Environment) -> None:
         env.globals["which"] = which
+        env.filters["shell_quote"] = shlex.quote
 
 
 @pass_environment
