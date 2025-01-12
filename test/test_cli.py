@@ -8,6 +8,8 @@ import pytest
 from dotplate.__main__ import main
 from dotplate.util import is_executable
 
+DATA_DIR = Path(__file__).with_name("data")
+
 
 def show_result(r: Result) -> str:
     if r.exception is not None:
@@ -37,38 +39,10 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
             assert is_executable(p1) == is_executable(p2)
 
 
-@pytest.mark.usecase("simple")
-def test_install_simple(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
-) -> None:
-    monkeypatch.chdir(casedirs.src)
-    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
-    assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, casedirs.dest)
-
-
-@pytest.mark.usecase("custom-brackets")
-def test_install_custom_brackets(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
-) -> None:
-    monkeypatch.chdir(casedirs.src)
-    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
-    assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, casedirs.dest)
-
-
-@pytest.mark.usecase("next-to-src")
-def test_install_next_to_src(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
-) -> None:
-    monkeypatch.chdir(casedirs.src)
-    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
-    assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, casedirs.dest)
-
-
-@pytest.mark.usecase("script")
-def test_install_script(
+@pytest.mark.parametrize(
+    "casedirs", sorted(p.name for p in (DATA_DIR / "cases").iterdir()), indirect=True
+)
+def test_install(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)

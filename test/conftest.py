@@ -39,14 +39,17 @@ class CaseDirs:
 def casedirs(
     request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
 ) -> CaseDirs:
-    if (mark := request.node.get_closest_marker("usecase")) is not None:
-        try:
-            (name,) = mark.args
-        except ValueError:
-            raise pytest.UsageError("usecase takes exactly one argument")
-        casedir = DATA_DIR / "cases" / name
-        src = tmp_path_factory.mktemp(f"{name}_src")
-        shutil.copytree(casedir / "src", src, dirs_exist_ok=True)
-        return CaseDirs(src=src, dest=casedir / "dest")
-    else:
-        raise pytest.UsageError("casedir fixture must be accompanied by usecase mark")
+    if (name := getattr(request, "param", None)) is None:
+        if (mark := request.node.get_closest_marker("usecase")) is not None:
+            try:
+                (name,) = mark.args
+            except ValueError:
+                raise pytest.UsageError("usecase takes exactly one argument")
+        else:
+            raise pytest.UsageError(
+                "casedir fixture must be accompanied by usecase mark"
+            )
+    casedir = DATA_DIR / "cases" / name
+    src = tmp_path_factory.mktemp(f"{name}_src")
+    shutil.copytree(casedir / "src", src, dirs_exist_ok=True)
+    return CaseDirs(src=src, dest=casedir / "dest")
