@@ -1,24 +1,18 @@
 from __future__ import annotations
-from pathlib import Path
-import shutil
+from conftest import CaseDirs
+import pytest
 from dotplate import Dotplate
 
-DATA_DIR = Path(__file__).with_name("data")
 
-
-def test_simple_templates(tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "simple" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
-    assert dp.src == tmp_path
+@pytest.mark.usecase("simple")
+def test_simple_templates(casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
+    assert dp.src == casedirs.src
     assert dp.templates() == [".profile"]
 
 
-def test_next_to_src_templates(tmp_path: Path) -> None:
-    shutil.copytree(
-        DATA_DIR / "examples" / "next-to-src" / "src", tmp_path, dirs_exist_ok=True
-    )
-    dp = Dotplate.from_config_file(tmp_path / "dotplate.toml")
-    assert dp.src == tmp_path / "templates"
+@pytest.mark.usecase("next-to-src")
+def test_next_to_src_templates(casedirs: CaseDirs) -> None:
+    dp = Dotplate.from_config_file(casedirs.src / "dotplate.toml")
+    assert dp.src == casedirs.src / "templates"
     assert dp.templates() == [".profile"]

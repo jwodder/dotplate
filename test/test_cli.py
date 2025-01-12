@@ -1,9 +1,9 @@
 from __future__ import annotations
 from operator import attrgetter
 from pathlib import Path
-import shutil
 from traceback import format_exception
 from click.testing import CliRunner, Result
+from conftest import CaseDirs
 import pytest
 from dotplate.__main__ import main
 from dotplate.util import is_executable
@@ -40,14 +40,12 @@ def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "casedir",
-    [pytest.param(p, id=p.name) for p in sorted((DATA_DIR / "examples").iterdir())],
+    "casedirs", sorted(p.name for p in (DATA_DIR / "cases").iterdir()), indirect=True
 )
 def test_install(
-    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, tmp_path: Path, casedir: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
-    shutil.copytree(casedir / "src", tmp_path, dirs_exist_ok=True)
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.chdir(casedirs.src)
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
-    assert_dirtrees_eq(tmp_home, casedir / "dest")
+    assert_dirtrees_eq(tmp_home, casedirs.dest)
