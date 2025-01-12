@@ -1,8 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import json
 from pathlib import Path
 import shutil
 import pytest
+from pytest_mock import MockerFixture
 
 DATA_DIR = Path(__file__).with_name("data")
 
@@ -37,7 +39,9 @@ class CaseDirs:
 
 @pytest.fixture
 def casedirs(
-    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+    mocker: MockerFixture,
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
 ) -> CaseDirs:
     if (name := getattr(request, "param", None)) is None:
         if (mark := request.node.get_closest_marker("usecase")) is not None:
@@ -52,4 +56,7 @@ def casedirs(
     casedir = DATA_DIR / "cases" / name
     src = tmp_path_factory.mktemp(f"{name}_src")
     shutil.copytree(casedir / "src", src, dirs_exist_ok=True)
+    if (specfile := (casedir / "which-mock.json")).exists():
+        spec = json.loads(specfile.read_text(encoding="utf-8"))
+        mocker.patch("shutil.which", side_effect=spec.__getitem__)
     return CaseDirs(src=src, dest=casedir / "dest")

@@ -7,6 +7,7 @@ from typing import Annotated, Any, Literal
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import AfterValidator
+from .jinja_ext import DotplateExt
 from .util import SuiteSet
 
 if sys.version_info[:2] >= (3, 11):
@@ -169,7 +170,7 @@ class Config(BaseConfig):
             lstrip_blocks=self.jinja.lstrip_blocks,
             newline_sequence=self.jinja.newline_sequence,
             keep_trailing_newline=self.jinja.keep_trailing_newline,
-            extensions=self.jinja.extensions,
+            extensions=[DotplateExt, *self.jinja.extensions],
             optimized=self.jinja.optimized,
             autoescape=self.jinja.get_autoescape(),
             cache_size=self.jinja.cache_size,
