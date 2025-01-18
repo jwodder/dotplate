@@ -49,3 +49,15 @@ def test_install(
     r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
     assert r.exit_code == 0, show_result(r)
     assert_dirtrees_eq(tmp_home, casedirs.dest)
+
+
+@pytest.mark.usecase("suited")
+def test_install_suite_enabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
+) -> None:
+    monkeypatch.chdir(casedirs.src)
+    r = CliRunner().invoke(
+        main, ["--enable-suite=vim", "install", "--yes"], standalone_mode=False
+    )
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-vim"))
