@@ -1,0 +1,14 @@
+[core]
+src = "."
+dest = "~"
+
+[suites.vim]
+files = [".vimrc"]
+
+[vars]
+editor = "vim"
+
+additional_paths = [
+   "$HOME/local/bin",
+   "$HOME/.cargo/bin",
+]

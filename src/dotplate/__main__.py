@@ -14,13 +14,19 @@ except ImportError:
 DEFAULT_CONFIG_PATH = Path("dotplate.toml")
 
 
-def enable_suite(ctx: click.Context, _param: click.Parameter, value: str) -> str:
-    ctx.params.setdefault("suites_enabled", {})[value] = True
+def enable_suite(
+    ctx: click.Context, _param: click.Parameter, value: tuple[str, ...]
+) -> tuple[str, ...]:
+    for v in value:
+        ctx.params.setdefault("suites_enabled", {})[v] = True
     return value
 
 
-def disable_suite(ctx: click.Context, _param: click.Parameter, value: str) -> str:
-    ctx.params.setdefault("suites_enabled", {})[value] = False
+def disable_suite(
+    ctx: click.Context, _param: click.Parameter, value: tuple[str, ...]
+) -> tuple[str, ...]:
+    for v in value:
+        ctx.params.setdefault("suites_enabled", {})[v] = False
     return value
 
 
