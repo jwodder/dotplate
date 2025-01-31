@@ -1,0 +1,11 @@
+[core]
+src = "."
+dest = "~"
+
+[suites.foo]
+files = ["foo.txt", "foobar.txt"]
+enabled = true
+
+[suites.bar]
+files = ["bar.txt", "foobar.txt"]
+enabled = false

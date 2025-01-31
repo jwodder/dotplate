@@ -73,3 +73,41 @@ def test_install_suite_disabled(
     )
     assert r.exit_code == 0, show_result(r)
     assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-no-vim"))
+
+
+@pytest.mark.usecase("multisuite")
+def test_install_multisuite_both_enabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
+) -> None:
+    monkeypatch.chdir(casedirs.src)
+    r = CliRunner().invoke(
+        main, ["--enable-suite=bar", "install", "--yes"], standalone_mode=False
+    )
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-foobar"))
+
+
+@pytest.mark.usecase("multisuite")
+def test_install_multisuite_switch_enabled(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
+) -> None:
+    monkeypatch.chdir(casedirs.src)
+    r = CliRunner().invoke(
+        main,
+        ["--enable-suite=bar", "--disable-suite=foo", "install", "--yes"],
+        standalone_mode=False,
+    )
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-bar"))
+
+
+@pytest.mark.usecase("multisuite")
+def test_install_multisuite_disable_all(
+    monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
+) -> None:
+    monkeypatch.chdir(casedirs.src)
+    r = CliRunner().invoke(
+        main, ["--disable-suite=foo", "install", "--yes"], standalone_mode=False
+    )
+    assert r.exit_code == 0, show_result(r)
+    assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-neither"))

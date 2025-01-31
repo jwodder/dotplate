@@ -1,0 +1,9 @@
+{% if dotplate.suites.foo.enabled -%}
+If you can see this, the "foo" suite was enabled.
+{%- endif -%}
+{%- if dotplate.suites.foo.enabled and dotplate.suites.bar.enabled %}
+
+{% endif -%}
+{%- if dotplate.suites.bar.enabled -%}
+If you can see this, the "bar" suite was enabled.
+{%- endif -%}
