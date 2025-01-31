@@ -167,8 +167,8 @@ class RenderedFile:
                 unified_diff(
                     dest_content.splitlines(True),
                     self.content.splitlines(True),
-                    fromfile=self.template,
-                    tofile=str(self.dest_path),
+                    fromfile=str(self.dest_path),
+                    tofile=self.template,
                 )
             )
             self._diff = Diff(delta=delta, state=state, xbit_diff=xbit_diff)
