@@ -79,8 +79,28 @@ def test_install_suite_disabled(
     "args,destdir",
     [
         (["--enable-suite=bar"], "dest-foobar"),
-        (["--enable-suite=bar", "--disable-suite=foo"], "dest-bar"),
+        (["--enable-suite=bar", "--enable-suite=foo"], "dest-foobar"),
+        (["--enable-suite=bar", "--disable-suite=bar"], "dest"),
+        (
+            ["--enable-suite=bar", "--disable-suite=bar", "--enable-suite=bar"],
+            "dest-foobar",
+        ),
         (["--disable-suite=foo"], "dest-neither"),
+        (["--disable-suite=foo", "--disable-suite=bar"], "dest-neither"),
+        (["--disable-suite=foo", "--enable-suite=foo"], "dest"),
+        (
+            ["--disable-suite=foo", "--enable-suite=foo", "--disable-suite=foo"],
+            "dest-neither",
+        ),
+        (["--enable-suite=bar", "--disable-suite=foo"], "dest-bar"),
+        (
+            ["--enable-suite=bar", "--disable-suite=foo", "--enable-suite=foo"],
+            "dest-foobar",
+        ),
+        (
+            ["--disable-suite=foo", "--enable-suite=bar", "--disable-suite=bar"],
+            "dest-neither",
+        ),
     ],
 )
 @pytest.mark.usecase("multisuite")
