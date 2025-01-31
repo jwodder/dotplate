@@ -64,12 +64,10 @@ def main(argv: list[str] | None = None) -> None:
 
 def parse_args(argv: list[str] | None = None) -> tuple[Dotplate, argparse.Namespace]:
     parser = argparse.ArgumentParser(
-        description=(
-            "Yet another dotfile manager/templater\n"
-            "\n"
+        description="Yet another dotfile manager/templater",
+        epilog=(
             "Visit <https://github.com/jwodder/dotplate> or"
-            " <https://dotplate.rtfd.io> for\n"
-            "more information."
+            " <https://dotplate.rtfd.io> for more information."
         ),
     )
     parser.add_argument(
