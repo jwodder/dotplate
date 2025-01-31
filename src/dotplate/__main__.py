@@ -1,10 +1,13 @@
 from __future__ import annotations
+import argparse
+from collections.abc import Sequence
+from enum import Enum
 from pathlib import Path
-import click
+import sys
+from typing import Any
 from . import __version__
 from .config import Config, LocalConfig
-from .dotplate import Dotplate
-from .prompt import PromptAction, install_prompt
+from .dotplate import Dotplate, RenderedFile
 
 try:
     import readline  # noqa: F401
@@ -14,112 +17,159 @@ except ImportError:
 DEFAULT_CONFIG_PATH = Path("dotplate.toml")
 
 
-def enable_suite(
-    ctx: click.Context, _param: click.Parameter, value: tuple[str, ...]
-) -> tuple[str, ...]:
-    for v in value:
-        ctx.params.setdefault("suites_enabled", {})[v] = True
-    return value
+class EnableSuite(argparse.Action):
+    def __call__(
+        self,
+        _parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        value: str | Sequence[Any] | None,
+        _option_string: str | None = None,
+    ) -> None:
+        if not isinstance(value, str):
+            raise TypeError(value)  # pragma: no cover
+        enabled = getattr(namespace, "suites_enabled", {})
+        enabled[value] = True
+        namespace.suites_enabled = enabled
 
 
-def disable_suite(
-    ctx: click.Context, _param: click.Parameter, value: tuple[str, ...]
-) -> tuple[str, ...]:
-    for v in value:
-        ctx.params.setdefault("suites_enabled", {})[v] = False
-    return value
+class DisableSuite(argparse.Action):
+    def __call__(
+        self,
+        _parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        value: str | Sequence[Any] | None,
+        _option_string: str | None = None,
+    ) -> None:
+        if not isinstance(value, str):
+            raise TypeError(value)  # pragma: no cover
+        enabled = getattr(namespace, "suites_enabled", {})
+        enabled[value] = False
+        namespace.suites_enabled = enabled
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
-@click.option(
-    "-c",
-    "--config",
-    type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
-    default=DEFAULT_CONFIG_PATH,
-    help="Read the primary config from the given file",
-    show_default=True,
-)
-@click.option(
-    "-d",
-    "--dest",
-    type=click.Path(file_okay=False, path_type=Path),
-    help="Install templated files in the given directory [default: set by config]",
-)
-@click.option(
-    "-l",
-    "--local-config",
-    type=click.Path(exists=True, dir_okay=False, readable=True, path_type=Path),
-    help="Read the local config from the given file [default: set by config]",
-)
-@click.option(
-    "-s",
-    "--enable-suite",
-    multiple=True,
-    callback=enable_suite,
-    expose_value=False,
-    help="Enable the given suite of files",
-    metavar="SUITE",
-)
-@click.option(
-    "-S",
-    "--disable-suite",
-    multiple=True,
-    callback=disable_suite,
-    expose_value=False,
-    help="Disable the given suite of files",
-    metavar="SUITE",
-)
-@click.version_option(
-    __version__,
-    "-V",
-    "--version",
-    message="%(prog)s %(version)s",
-)
-@click.pass_context
-def main(
-    ctx: click.Context,
-    config: Path,
-    dest: Path | None,
-    local_config: Path | None,
-    suites_enabled: dict[str, bool] | None = None,
-) -> None:
-    """
-    Yet another dotfile manager/templater
+def main(argv: list[str] | None = None) -> None:
+    (dotplate, ns) = parse_args(argv)
+    match ns.cmd:
+        case "diff":
+            diff(dotplate, ns.templates)
+        case "install":
+            install(dotplate, ns.templates, yes=ns.yes)
+        case "list":
+            list_cmd(dotplate)
+        case "render":
+            render(dotplate, ns.template)
+        case _:
+            raise RuntimeError(f"Unhandled subcommand: {ns.cmd!r}")
 
-    Visit <https://github.com/jwodder/dotplate> or <https://dotplate.rtfd.io> for
-    more information.
-    """
-    cfg = Config.from_file(config)
-    if local_config is None:
+
+def parse_args(argv: list[str] | None = None) -> tuple[Dotplate, argparse.Namespace]:
+    parser = argparse.ArgumentParser(
+        description="Yet another dotfile manager/templater",
+        epilog=(
+            "Visit <https://github.com/jwodder/dotplate> or"
+            " <https://dotplate.rtfd.io> for more information."
+        ),
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        metavar="PATH",
+        help=(
+            "Read the primary config from the given file"
+            f"  [default: {DEFAULT_CONFIG_PATH}]"
+        ),
+    )
+    parser.add_argument(
+        "-d",
+        "--dest",
+        type=Path,
+        metavar="DIRPATH",
+        help="Install templated files in the given directory  [default: set by config]",
+    )
+    parser.add_argument(
+        "-l",
+        "--local-config",
+        type=Path,
+        metavar="PATH",
+        help="Read the local config from the given file  [default: set by config]",
+    )
+    parser.add_argument(
+        "-s",
+        "--enable-suite",
+        action=EnableSuite,
+        metavar="SUITE",
+        help="Enable the given suite of files",
+    )
+    parser.add_argument(
+        "-S",
+        "--disable-suite",
+        action=DisableSuite,
+        metavar="SUITE",
+        help="Disable the given suite of files",
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    subparsers = parser.add_subparsers(dest="cmd")
+    install = subparsers.add_parser(
+        "install",
+        help=(
+            "Render & install the given templates in the destination directory.\n"
+            "\n"
+            "If no templates are given on the command line, all active templates are\n"
+            "diffed."
+        ),
+    )
+    install.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Install all active templates without prompting for confirmation",
+    )
+    install.add_argument("templates", nargs="*")
+    diff = subparsers.add_parser(
+        "diff",
+        help=(
+            "Render each template and output a diff between the rendered text and the\n"
+            "contents of the corresponding file in the destination directory.  If a\n"
+            "given render matches the installed file, nothing is output.\n"
+            "\n"
+            "If no templates are given on the command line, all active templates are\n"
+            "diffed."
+        ),
+    )
+    diff.add_argument("templates", nargs="*")
+    subparsers.add_parser("list", help="List all active templates")
+    render = subparsers.add_parser(
+        "render", help="Render the given template and output the resulting text"
+    )
+    render.add_argument("template")
+    ns = parser.parse_args(argv)
+    cfg = Config.from_file(ns.config)
+    if ns.local_config is None:
         cfg.load_local_config()
     else:
-        lccfg = LocalConfig.from_file(local_config)
+        lccfg = LocalConfig.from_file(ns.local_config)
         cfg.merge_local_config(lccfg)
-    if dest is not None:
-        cfg.core.dest = dest
-    if suites_enabled is not None:
-        for name, enable in suites_enabled.items():
-            try:
-                cfg.suites[name].enabled = enable
-            except KeyError:
-                pass
-    ctx.obj = Dotplate.from_config(cfg)
+    if ns.dest is not None:
+        cfg.core.dest = ns.dest
+    for name, enable in getattr(ns, "suites_enabled", {}).items():
+        try:
+            cfg.suites[name].enabled = enable
+        except KeyError:
+            pass
+    dotplate = Dotplate.from_config(cfg)
+    return (dotplate, ns)
 
 
-@main.command()
-@click.argument("templates", nargs=-1)
-@click.pass_obj
-def diff(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
-    """
-    Render each template and output a diff between the rendered text and the
-    contents of the corresponding file in the destination directory.  If a
-    given render matches the installed file, nothing is output.
-
-    If no templates are given on the command line, all active templates are
-    diffed.
-    """
+def diff(dotplate: Dotplate, templates: list[str]) -> None:
     if not templates:
-        templates = tuple(dotplate.templates())
+        templates = dotplate.templates()
     for sp in templates:
         file = dotplate.render(sp)
         d = file.diff()
@@ -127,24 +177,9 @@ def diff(dotplate: Dotplate, templates: tuple[str, ...]) -> None:
             print(d.delta, end="")
 
 
-@main.command()
-@click.option(
-    "-y",
-    "--yes",
-    is_flag=True,
-    help="Install all active templates without prompting for confirmation",
-)
-@click.argument("templates", nargs=-1)
-@click.pass_obj
-def install(dotplate: Dotplate, templates: tuple[str, ...], yes: bool) -> None:
-    """
-    Render & install the given templates in the destination directory.
-
-    If no templates are given on the command line, all active templates are
-    diffed.
-    """
+def install(dotplate: Dotplate, templates: list[str], yes: bool) -> None:
     if not templates:
-        templates = tuple(dotplate.templates())
+        templates = dotplate.templates()
     files = [dotplate.render(p) for p in templates]
     for f in files:
         if not f.diff():
@@ -163,21 +198,41 @@ def install(dotplate: Dotplate, templates: tuple[str, ...], yes: bool) -> None:
             break
 
 
-@main.command("list")
-@click.pass_obj
 def list_cmd(dotplate: Dotplate) -> None:
-    """List all active templates"""
     for sp in dotplate.templates():
         print(sp)
 
 
-@main.command()
-@click.pass_obj
-@click.argument("template")
 def render(dotplate: Dotplate, template: str) -> None:
-    """Render the given template and output the resulting text"""
     f = dotplate.render(template)
     print(f.content, end="")
+
+
+class PromptAction(Enum):
+    YES = 1
+    NO = 2
+    ALL = 3
+    QUIT = 4
+
+
+def install_prompt(rf: RenderedFile) -> PromptAction:
+    while True:
+        try:
+            print(f"Install {rf.template} at {rf.dest_path}?")
+            r = input("[(y)es/(n)o/(a)ll/(d)iff/(q)uit] ")
+        except KeyboardInterrupt:
+            sys.exit(1)
+        match r.lower():
+            case "y" | "yes":
+                return PromptAction.YES
+            case "n" | "no":
+                return PromptAction.NO
+            case "d" | "diff":
+                print(rf.diff().delta)
+            case "a" | "all":
+                return PromptAction.ALL
+            case "q" | "quit":
+                return PromptAction.QUIT
 
 
 if __name__ == "__main__":

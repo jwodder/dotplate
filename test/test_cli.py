@@ -1,22 +1,12 @@
 from __future__ import annotations
 from operator import attrgetter
 from pathlib import Path
-from traceback import format_exception
-from click.testing import CliRunner, Result
 from conftest import CaseDirs
 import pytest
 from dotplate.__main__ import main
 from dotplate.util import is_executable
 
 DATA_DIR = Path(__file__).with_name("data")
-
-
-def show_result(r: Result) -> str:
-    if r.exception is not None:
-        assert isinstance(r.exc_info, tuple)
-        return "".join(format_exception(*r.exc_info))
-    else:
-        return r.output
 
 
 def assert_dirtrees_eq(tree1: Path, tree2: Path) -> None:
@@ -46,8 +36,7 @@ def test_install(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    r = CliRunner().invoke(main, ["install", "--yes"], standalone_mode=False)
-    assert r.exit_code == 0, show_result(r)
+    main(["install", "--yes"])
     assert_dirtrees_eq(tmp_home, casedirs.dest)
 
 
@@ -56,10 +45,7 @@ def test_install_suite_enabled(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    r = CliRunner().invoke(
-        main, ["--enable-suite=vim", "install", "--yes"], standalone_mode=False
-    )
-    assert r.exit_code == 0, show_result(r)
+    main(["--enable-suite=vim", "install", "--yes"])
     assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-vim"))
 
 
@@ -68,8 +54,46 @@ def test_install_suite_disabled(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    r = CliRunner().invoke(
-        main, ["--disable-suite=vim", "install", "--yes"], standalone_mode=False
-    )
-    assert r.exit_code == 0, show_result(r)
+    main(["--disable-suite=vim", "install", "--yes"])
     assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-no-vim"))
+
+
+@pytest.mark.parametrize(
+    "args,destdir",
+    [
+        (["--enable-suite=bar"], "dest-foobar"),
+        (["--enable-suite=bar", "--enable-suite=foo"], "dest-foobar"),
+        (["--enable-suite=bar", "--disable-suite=bar"], "dest"),
+        (
+            ["--enable-suite=bar", "--disable-suite=bar", "--enable-suite=bar"],
+            "dest-foobar",
+        ),
+        (["--disable-suite=foo"], "dest-neither"),
+        (["--disable-suite=foo", "--disable-suite=bar"], "dest-neither"),
+        (["--disable-suite=foo", "--enable-suite=foo"], "dest"),
+        (
+            ["--disable-suite=foo", "--enable-suite=foo", "--disable-suite=foo"],
+            "dest-neither",
+        ),
+        (["--enable-suite=bar", "--disable-suite=foo"], "dest-bar"),
+        (
+            ["--enable-suite=bar", "--disable-suite=foo", "--enable-suite=foo"],
+            "dest-foobar",
+        ),
+        (
+            ["--disable-suite=foo", "--enable-suite=bar", "--disable-suite=bar"],
+            "dest-neither",
+        ),
+    ],
+)
+@pytest.mark.usecase("multisuite")
+def test_install_multisuite(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_home: Path,
+    casedirs: CaseDirs,
+    args: list[str],
+    destdir: str,
+) -> None:
+    monkeypatch.chdir(casedirs.src)
+    main([*args, "install", "--yes"])
+    assert_dirtrees_eq(tmp_home, casedirs.dest.with_name(destdir))

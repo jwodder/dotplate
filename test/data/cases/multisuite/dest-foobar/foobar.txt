@@ -1,0 +1,3 @@
+If you can see this, the "foo" suite was enabled.
+
+If you can see this, the "bar" suite was enabled.
