@@ -36,7 +36,7 @@ def test_install(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    main(["install", "--yes"])
+    assert main(["install", "--yes"]) == 0
     assert_dirtrees_eq(tmp_home, casedirs.dest)
 
 
@@ -45,7 +45,7 @@ def test_install_suite_enabled(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    main(["--enable-suite=vim", "install", "--yes"])
+    assert main(["--enable-suite=vim", "install", "--yes"]) == 0
     assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-vim"))
 
 
@@ -54,7 +54,7 @@ def test_install_suite_disabled(
     monkeypatch: pytest.MonkeyPatch, tmp_home: Path, casedirs: CaseDirs
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    main(["--disable-suite=vim", "install", "--yes"])
+    assert main(["--disable-suite=vim", "install", "--yes"]) == 0
     assert_dirtrees_eq(tmp_home, casedirs.dest.with_name("dest-no-vim"))
 
 
@@ -95,5 +95,5 @@ def test_install_multisuite(
     destdir: str,
 ) -> None:
     monkeypatch.chdir(casedirs.src)
-    main([*args, "install", "--yes"])
+    assert main([*args, "install", "--yes"]) == 0
     assert_dirtrees_eq(tmp_home, casedirs.dest.with_name(destdir))

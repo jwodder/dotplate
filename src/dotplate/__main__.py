@@ -47,17 +47,17 @@ class DisableSuite(argparse.Action):
         namespace.suites_enabled = enabled
 
 
-def main(argv: list[str] | None = None) -> None:
+def main(argv: list[str] | None = None) -> int:
     (dotplate, ns) = parse_args(argv)
     match ns.cmd:
         case "diff":
-            diff(dotplate, ns.templates)
+            return diff(dotplate, ns.templates)
         case "install":
-            install(dotplate, ns.templates, yes=ns.yes)
+            return install(dotplate, ns.templates, yes=ns.yes)
         case "list":
-            list_cmd(dotplate)
+            return list_cmd(dotplate)
         case "render":
-            render(dotplate, ns.template)
+            return render(dotplate, ns.template)
         case _:
             raise RuntimeError(f"Unhandled subcommand: {ns.cmd!r}")
 
@@ -167,7 +167,7 @@ def parse_args(argv: list[str] | None = None) -> tuple[Dotplate, argparse.Namesp
     return (dotplate, ns)
 
 
-def diff(dotplate: Dotplate, templates: list[str]) -> None:
+def diff(dotplate: Dotplate, templates: list[str]) -> int:
     if not templates:
         templates = dotplate.templates()
     for sp in templates:
@@ -175,9 +175,10 @@ def diff(dotplate: Dotplate, templates: list[str]) -> None:
         d = file.diff()
         if d.state:
             print(d.delta, end="")
+    return 0
 
 
-def install(dotplate: Dotplate, templates: list[str], yes: bool) -> None:
+def install(dotplate: Dotplate, templates: list[str], yes: bool) -> int:
     if not templates:
         templates = dotplate.templates()
     files = [dotplate.render(p) for p in templates]
@@ -191,21 +192,26 @@ def install(dotplate: Dotplate, templates: list[str], yes: bool) -> None:
             if action is PromptAction.ALL:
                 yes = True
                 action = PromptAction.YES
+            elif action is PromptAction.CTRL_C:
+                return 1
         if action is PromptAction.YES:
             f.install()
             print(f"Installed {f.template} at {f.dest_path}")
         elif action is PromptAction.QUIT:
             break
+    return 0
 
 
-def list_cmd(dotplate: Dotplate) -> None:
+def list_cmd(dotplate: Dotplate) -> int:
     for sp in dotplate.templates():
         print(sp)
+    return 0
 
 
-def render(dotplate: Dotplate, template: str) -> None:
+def render(dotplate: Dotplate, template: str) -> int:
     f = dotplate.render(template)
     print(f.content, end="")
+    return 0
 
 
 class PromptAction(Enum):
@@ -213,6 +219,7 @@ class PromptAction(Enum):
     NO = 2
     ALL = 3
     QUIT = 4
+    CTRL_C = 5
 
 
 def install_prompt(rf: RenderedFile) -> PromptAction:
@@ -221,7 +228,7 @@ def install_prompt(rf: RenderedFile) -> PromptAction:
             print(f"Install {rf.template} at {rf.dest_path}?")
             r = input("[(y)es/(n)o/(a)ll/(d)iff/(q)uit] ")
         except KeyboardInterrupt:
-            sys.exit(1)
+            return PromptAction.CTRL_C
         match r.lower():
             case "y" | "yes":
                 return PromptAction.YES
@@ -236,4 +243,4 @@ def install_prompt(rf: RenderedFile) -> PromptAction:
 
 
 if __name__ == "__main__":
-    main()  # pragma: no cover
+    sys.exit(main())  # pragma: no cover
