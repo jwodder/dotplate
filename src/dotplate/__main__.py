@@ -115,7 +115,7 @@ def parse_args(argv: list[str] | None = None) -> tuple[Dotplate, argparse.Namesp
         action="version",
         version=f"%(prog)s {__version__}",
     )
-    subparsers = parser.add_subparsers(dest="cmd")
+    subparsers = parser.add_subparsers(dest="cmd", required=True)
     install = subparsers.add_parser(
         "install",
         help=(
