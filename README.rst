@@ -16,10 +16,11 @@
     :target: https://opensource.org/licenses/MIT
     :alt: MIT License
 
+`GitHub <https://github.com/jwodder/dotplate>`_
+| `Issues <https://github.com/jwodder/dotplate/issues>`_
+
 ..
-    `GitHub <https://github.com/jwodder/dotplate>`_
     | `Documentation <https://dotplate.readthedocs.io>`_
-    | `Issues <https://github.com/jwodder/dotplate/issues>`_
 
 ``dotplate`` is yet another dotfile manager/templater program and Python
 library, written because I couldn't find one that already had the exact
